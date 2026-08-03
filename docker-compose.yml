@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: keewe
+      POSTGRES_PASSWORD: keewe
+      POSTGRES_DB: keewe
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keewe -d keewe"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      DATABASE_URL: postgres://keewe:keewe@db:5432/keewe?sslmode=disable
+      PROVIDER_BASE_URL: http://provider:4000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run migrate:up && npm run start:dev"
+
+  provider:
+    build: ./provider
+    environment:
+      PORT: "4000"
+      # Fixed seed: every candidate hits the same anomalies for the same call sequence.
+      PROVIDER_SEED: "424242"
+      WEBHOOK_URL: http://api:3000/webhooks/provider
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./provider:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+  web:
+    build: ./web
+    environment:
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  db-data:
