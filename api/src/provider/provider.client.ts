@@ -28,16 +28,16 @@ export class ProviderClient {
     return response.json();
   }
 
-  async createConversion(reference: string, amount: string, sourceCurrency: Currency, targetCurrency: Currency) {
-    // TODO: error handling
+  async createConversion(reference: string, amount: number, sourceCurrency: Currency, targetCurrency: Currency) {
     const response = await fetch(`${this.baseUrl}/v1/conversions`, {
       method: "POST",
+      headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         amount,
         sourceCurrency,
         targetCurrency,
         externalReference: reference
-      })
+      }),
     })
     if (!response.ok) {
       throw new Error("ERR_FAILED_CREATING_CONVERSION")
