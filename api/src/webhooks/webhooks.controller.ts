@@ -1,10 +1,10 @@
-import { Controller, NotImplementedException, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
+import { WebhooksProviderDto } from './dtos/webhooks.provider.dto';
 
 @Controller('webhooks')
 export class WebhooksController {
   @Post('provider')
-  receive(): never {
-    // TODO: handle events sent by the banking partner.
-    throw new NotImplementedException();
+  receive(@Body() webhookEventData: WebhooksProviderDto) {
+    
   }
 }
