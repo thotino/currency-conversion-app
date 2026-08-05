@@ -8,9 +8,12 @@ import { ConversionsController } from './conversions/conversions.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
 import { BalancesController } from './balances/balances.controller';
 import { QuotesModule } from './quotes/quotes.module';
-
+import { ConversionsModule } from './conversions/conversions.module';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { AppConfigService } from './config/app-config.service';
+const config: AppConfigService = new AppConfigService()
 @Module({
-  imports: [AppConfigModule, DatabaseModule, ProviderModule, QuotesModule],
+  imports: [AppConfigModule, DatabaseModule, ProviderModule, QuotesModule, ConversionsModule, SequelizeModule.forRoot({uri: config.databaseUrl})],
   controllers: [
     HealthController,
     QuotesController,
