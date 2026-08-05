@@ -6,21 +6,31 @@ export default class Conversion {
     #userId: string;
     #status: ConversionStatus;
     #quote: Quote
-    #createdAt: Date;
-    constructor(userId: string, quote: Quote) {
-        if (quote.isExpired()) {
-            throw new Error("EXPIRED QUOTE");
-        }
-        this.#createdAt = new Date(Date.now());
+    constructor(userId: string, idempotencyKey: string, quote: Quote) {
+        // if (quote.isExpired()) {
+        //     throw new Error("EXPIRED QUOTE");
+        // }
         this.#userId = userId;
         this.#status = "PENDING";
         this.#quote = quote;
-        this.#id = `conversion-${userId}-${quote.source.currency}-${quote.target.currency}-${this.#createdAt.valueOf()}`
+        this.#id = idempotencyKey;
+    }
+    get quote() {
+        return this.#quote;
     }
     markAsCompleted() {
         this.#status = "COMPLETED";
     }
     markAsFailed() {
         this.#status = "FAILED";
+    }
+    toJSON() {
+        return {
+            id: this.#id,
+            status: this.#status,
+            userId: this.#userId,
+            quote: this.#quote
+        }
+
     }
 }
