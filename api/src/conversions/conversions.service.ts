@@ -3,6 +3,7 @@ import Quote from "src/entities/Quote";
 import { ProviderClient } from "src/provider/provider.client";
 import { ConversionsRepository } from "./conversions.repository";
 import { QuoteInterface } from "src/types";
+import Conversion from "src/entities/Conversion";
 class IdempotencyKeyViolationError extends Error {
     code: string = "DUPLICATED_IDEMPOTENCY_KEY"; 
     value: {key: string};
@@ -45,5 +46,8 @@ export class ConversionsService {
     }
     async findOne(idempotencyKey: string, providerRef: string) {
         return await this.conversionRepository.findByKeyAndRef(idempotencyKey, providerRef);
+    }
+    async updateOne(conversion: Conversion) {
+        return await this.conversionRepository.update(conversion);
     }
 }

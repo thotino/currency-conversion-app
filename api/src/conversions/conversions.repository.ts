@@ -3,7 +3,7 @@ import { InjectModel } from "@nestjs/sequelize";
 import { Conversion as ConversionModel } from "./models/conversions.model";
 import Quote from "src/entities/Quote";
 import Conversion from "src/entities/Conversion";
-import { MoneyInterface } from "src/types";
+import { ConversionStatus, MoneyInterface } from "src/types";
 
 @Injectable()
 export class ConversionsRepository {
@@ -15,7 +15,7 @@ export class ConversionsRepository {
             instance.quote.target as MoneyInterface, 
             instance.quote.fees as MoneyInterface, 
             instance.quote.rate as number, 
-            new Date(instance.quote.expiration as string)))
+            new Date(instance.quote.expiration as string)), instance.status as ConversionStatus)
     }
     async create(idempotencyKey: string, userId: string, quote: Quote, providerRef: string, status: string) {
         const createdConversion = await this.conversionModel.create({
@@ -24,7 +24,7 @@ export class ConversionsRepository {
             provider_ref: providerRef,
             quote: quote,
             status: status,
-        }, { ignoreDuplicates: true });
+        });
         return ConversionsRepository.format(createdConversion!);
     }
     async findAll(userId: string) {
@@ -38,5 +38,11 @@ export class ConversionsRepository {
     async findByKeyAndRef(idempotencyKey: string, providerRef: string) {
         const retrievedInstance = await this.conversionModel.findOne({ where: { id: idempotencyKey, provider_ref: providerRef } })
         return ConversionsRepository.format(retrievedInstance)
+    }
+    async update(conversion: Conversion) {
+        const {id, status} = conversion.toJSON();
+        const [updatedCount] = await this.conversionModel.update({ status }, { where: {id} })
+        if (updatedCount === 0) return null;
+        return this.findByKey(id)
     }
 }

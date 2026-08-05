@@ -10,3 +10,4 @@ export interface QuoteInterface {
     rate: number;
     expiration: Date;
 };
+export type ConversionStatus = "PENDING" | "COMPLETED" | "FAILED";

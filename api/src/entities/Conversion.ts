@@ -1,17 +1,14 @@
 import Quote from "./Quote";
+import type { ConversionStatus } from "src/types";
 
-type ConversionStatus = "PENDING" | "COMPLETED" | "FAILED";
 export default class Conversion {
     #id: string;
     #userId: string;
     #status: ConversionStatus;
     #quote: Quote
-    constructor(userId: string, idempotencyKey: string, quote: Quote) {
-        // if (quote.isExpired()) {
-        //     throw new Error("EXPIRED QUOTE");
-        // }
+    constructor(userId: string, idempotencyKey: string, quote: Quote, status: ConversionStatus) {
         this.#userId = userId;
-        this.#status = "PENDING";
+        this.#status = status;
         this.#quote = quote;
         this.#id = idempotencyKey;
     }
