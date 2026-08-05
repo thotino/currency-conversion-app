@@ -24,8 +24,9 @@ export default class Quote {
     toJSON() {
         return {
             rate: this.#rate,
-            source: `${this.#source.amount} ${this.#source.currency}`,
-            target: `${this.#target.amount} ${this.#target.currency}`,
+            source: this.#source,
+            target: this.#target,
+            fees: this.#fees,
             expiration: this.#expiresAt,
         }
 

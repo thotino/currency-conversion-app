@@ -35,4 +35,10 @@ export default class Money {
     static from(amount: number, currency: Currency) {
         return new Money(amount, currency);
     }
+    toJSON() {
+        return {
+            amount: this.amount,
+            currency: this.currency
+        }
+    }
 }
