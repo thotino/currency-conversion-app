@@ -11,9 +11,10 @@ import { QuotesModule } from './quotes/quotes.module';
 import { ConversionsModule } from './conversions/conversions.module';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { AppConfigService } from './config/app-config.service';
+import { Conversion } from './conversions/models/conversions.model';
 const config: AppConfigService = new AppConfigService()
 @Module({
-  imports: [AppConfigModule, DatabaseModule, ProviderModule, QuotesModule, ConversionsModule, SequelizeModule.forRoot({uri: config.databaseUrl})],
+  imports: [AppConfigModule, DatabaseModule, ProviderModule, QuotesModule, ConversionsModule, SequelizeModule.forRoot({ uri: config.databaseUrl, models: [Conversion], autoLoadModels: true })],
   controllers: [
     HealthController,
     QuotesController,
