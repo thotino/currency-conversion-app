@@ -1,15 +1,7 @@
 import { ConversionsService } from "src/conversions/conversions.service";
 import { WebhooksProviderDto } from "./dtos/webhooks.provider.dto";
 import { Injectable } from "@nestjs/common";
-class ConversionNotFoundError extends Error{
-    code: string = "CONVERSION_NOT_FOUND";
-    value: {providerRef: string, externalRef: string};
-    constructor(providerRef: string, externalRef: string) {
-        const message= "Conversion instance not found";
-        super(message)
-        this.value = {providerRef, externalRef}
-    }
-}
+import { ConversionNotFoundError } from "src/errors/ConversionNotFoundError";
 enum ConversionsEventsTypes {
     EXECUTED = "conversion.executed",
     ACCEPTED = "conversion.accepted",
@@ -25,18 +17,14 @@ export class WebhooksService {
         switch (eventType) {
             case ConversionsEventsTypes.EXECUTED:
                 conversion.markAsCompleted();
+                await this.conversionsService.updateOne(conversion);
                 break;
 
             case ConversionsEventsTypes.REJECTED:
                 conversion.markAsFailed();
-                break;
-                
-            case ConversionsEventsTypes.ACCEPTED:
-                break;
-            default:
+                await this.conversionsService.updateOne(conversion);
                 break;
         }
-        await this.conversionsService.updateOne(conversion);
         return null
     }
 }
