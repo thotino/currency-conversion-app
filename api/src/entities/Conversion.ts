@@ -21,6 +21,7 @@ export default class Conversion {
     markAsFailed() {
         this.#status = "FAILED";
     }
+    isCompleted() {return this.#status === "COMPLETED";}
     toJSON() {
         return {
             id: this.#id,
