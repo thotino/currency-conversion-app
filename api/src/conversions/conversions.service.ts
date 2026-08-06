@@ -4,24 +4,9 @@ import { ProviderClient } from "src/provider/provider.client";
 import { ConversionsRepository } from "./conversions.repository";
 import { QuoteInterface } from "src/types";
 import Conversion from "src/entities/Conversion";
-class IdempotencyKeyViolationError extends Error {
-    code: string = "DUPLICATED_IDEMPOTENCY_KEY"; 
-    value: {key: string};
-    constructor(key: string) {
-        const message = "Conversion for this key already exists"
-        super(message)
-        this.value = {key}
-    }
-}
-class ExpiredQuoteError extends Error {
-    code: string = "EXPIRED_QUOTE"; 
-    value: {};
-    constructor() {
-        const message = "The quote for this conversion is outdated"
-        super(message)
-        this.value = {}
-    }
-}
+import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
+import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolationError";
+
 @Injectable()
 export class ConversionsService {
     constructor(readonly providerClient: ProviderClient, readonly conversionRepository: ConversionsRepository) {}
@@ -35,7 +20,7 @@ export class ConversionsService {
             }
         }
         if (quote.isExpired()) {
-            throw new ExpiredQuoteError()
+            throw new ExpiredQuoteError(quote.expiration.toISOString())
         }
         const { providerRef } = await this.providerClient.createConversion(idempotencyKey, quoteFromRequest.source.amount, quoteFromRequest.source.currency, quoteFromRequest.target.currency)
         const conversion = await this.conversionRepository.create(idempotencyKey, userId, quote, providerRef, "PENDING")
