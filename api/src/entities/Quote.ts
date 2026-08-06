@@ -34,6 +34,9 @@ export default class Quote {
   get rate() {
     return this.#rate;
   }
+  get fees() { 
+    return this.#fees;
+   }
   get expiration() {
     return this.#expiresAt;
   }
