@@ -1,5 +1,6 @@
 import { ConversionsService } from "src/conversions/conversions.service";
 import { WebhooksProviderDto } from "./dtos/webhooks.provider.dto";
+import { Injectable } from "@nestjs/common";
 class ConversionNotFoundError extends Error{
     code: string = "CONVERSION_NOT_FOUND";
     value: {providerRef: string, externalRef: string};
@@ -14,6 +15,7 @@ enum ConversionsEventsTypes {
     ACCEPTED = "conversion.accepted",
     REJECTED = "conversion.rejected"
 }
+@Injectable()
 export class WebhooksService {
     constructor(private conversionsService: ConversionsService) {}
     async handleEvent(event: WebhooksProviderDto) {
@@ -22,7 +24,7 @@ export class WebhooksService {
         if (conversion == null) {throw new ConversionNotFoundError(providerRef, externalReference)}
         switch (eventType) {
             case ConversionsEventsTypes.EXECUTED:
-                conversion.markAsCompleted();                
+                conversion.markAsCompleted();
                 break;
 
             case ConversionsEventsTypes.REJECTED:
@@ -34,6 +36,7 @@ export class WebhooksService {
             default:
                 break;
         }
+        await this.conversionsService.updateOne(conversion);
         return null
     }
 }
