@@ -18,9 +18,7 @@ export class ProviderClient {
     this.baseUrl = config.providerBaseUrl;
   }
 
-  // TODO: implement the calls to the banking partner.
   async getCurrentRates() {
-    // TODO: error handling
     const response = await fetch(`${this.baseUrl}/v1/rates`);
     if(!response.ok) {
       throw new Error("ERR_FAILED_FETCHING_RATES")
