@@ -51,16 +51,9 @@ export class ConversionsService {
         }
         const existingConversion = await this.conversionRepository.findByKey(idempotencyKey);
         if (existingConversion != null) {
-            const existingConversionQuote = await this.quotesRepository.findOne(existingConversion.quoteId);
-            // This case should never happen.
-            if (existingConversionQuote == null) {
-                throw new ExistingConversionQuoteNotFoundError(idempotencyKey, existingConversion.quoteId)
-            }
-            if (!quote.isEqual(existingConversionQuote)) {
-                throw new IdempotencyKeyViolationError(idempotencyKey)
-            }
             return existingConversion;
         }
+        //TODO: check if balance is ok.
         const { providerRef } = await this.providerClient.createConversion(idempotencyKey, quote.source.amount, quote.source.currency, quote.target.currency)
         const conversion = await this.conversionRepository.create(idempotencyKey, userId, quote.id, providerRef, "PENDING")
         return conversion;
