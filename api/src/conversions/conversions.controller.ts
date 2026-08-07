@@ -8,9 +8,7 @@ export class ConversionsController {
   @Post()
   async create(@Body() body: CreateConversionDto, @Headers("X-Idempotency-Key") idempotencyKey: string) {
     try {
-      const conversionCreationData = body.toEntity()
-      // conversionCreationData.userId = USER_ID;
-      const conversion = await this.conversionsService.create(conversionCreationData.userId, conversionCreationData.quote, idempotencyKey)
+      const conversion = await this.conversionsService.create(body.userId, body.quoteId, idempotencyKey)
       return conversion;
     } catch (error) {
       throw error;

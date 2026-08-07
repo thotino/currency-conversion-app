@@ -6,24 +6,63 @@ import { QuoteInterface } from "src/types";
 import Conversion from "src/entities/Conversion";
 import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolationError";
+import { QuotesRepository } from "src/quotes/quotes.repository";
+class AlreadyConsumedQuoteError extends Error {
+    code: string = "ALREADY_CONSUMED_QUOTE_ERROR";
+    value: { id: string }
+    constructor(id: string) {
+        const msg: string = "This quote is already consumed"
+        super(msg)
+        this.value = { id }
+    }
+}
+class QuoteNotFoundError extends Error {
+    code: string = "QUOTE_NOT_FOUND_ERROR";
+    value: { id: string }
+    constructor(id: string) {
+        const msg: string = "This quote is not found"
+        super(msg)
+        this.value = { id }
+    }
+}
 
+class ExistingConversionQuoteNotFoundError extends Error {
+    code: string = "QUOTE_NOT_FOUND_ERROR";
+    value: { conversionId: string, quoteId: string }
+    constructor(conversionId: string, quoteId: string) {
+        const msg: string = "This quote is not found"
+        super(msg)
+        this.value = { conversionId, quoteId }
+    }
+}
 @Injectable()
 export class ConversionsService {
-    constructor(readonly providerClient: ProviderClient, readonly conversionRepository: ConversionsRepository) {}
-    async create(userId: string, quoteFromRequest: QuoteInterface, idempotencyKey: string) {
-        const quote = Quote.from(quoteFromRequest.source, quoteFromRequest.target, quoteFromRequest.fees, quoteFromRequest.rate, quoteFromRequest.expiration)
-        const existingConversion = await this.conversionRepository.findByKey(idempotencyKey);
-        if (existingConversion != null) {
-            const existingConversionQuote = existingConversion.quote;
-            if (quote.isEqual(existingConversionQuote)) {
-                throw new IdempotencyKeyViolationError(idempotencyKey)
-            }
+    constructor(readonly providerClient: ProviderClient, readonly quotesRepository: QuotesRepository, readonly conversionRepository: ConversionsRepository) {}
+    async create(userId: string, quoteId: string, idempotencyKey: string) {
+        const quote = await this.quotesRepository.findOne(quoteId);
+        if (quote == null) {
+            throw new QuoteNotFoundError(quoteId)
         }
         if (quote.isExpired()) {
             throw new ExpiredQuoteError(quote.expiration.toISOString())
         }
-        const { providerRef } = await this.providerClient.createConversion(idempotencyKey, quoteFromRequest.source.amount, quoteFromRequest.source.currency, quoteFromRequest.target.currency)
-        const conversion = await this.conversionRepository.create(idempotencyKey, userId, quote, providerRef, "PENDING")
+        if (quote.isConsumed()) {
+            throw new AlreadyConsumedQuoteError(quote.id)
+        }
+        const existingConversion = await this.conversionRepository.findByKey(idempotencyKey);
+        if (existingConversion != null) {
+            const existingConversionQuote = await this.quotesRepository.findOne(existingConversion.quoteId);
+            // This case should never happen.
+            if (existingConversionQuote == null) {
+                throw new ExistingConversionQuoteNotFoundError(idempotencyKey, existingConversion.quoteId)
+            }
+            if (!quote.isEqual(existingConversionQuote)) {
+                throw new IdempotencyKeyViolationError(idempotencyKey)
+            }
+            return existingConversion;
+        }
+        const { providerRef } = await this.providerClient.createConversion(idempotencyKey, quote.source.amount, quote.source.currency, quote.target.currency)
+        const conversion = await this.conversionRepository.create(idempotencyKey, userId, quote.id, providerRef, "PENDING")
         return conversion;
     }
     async findAll(userId: string) {

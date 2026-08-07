@@ -1,5 +1,6 @@
 import { DataTypes, CreationOptional } from "sequelize";
-import { Table, Model, Column, CreatedAt, UpdatedAt } from "sequelize-typescript";
+import { Table, Model, Column, CreatedAt, UpdatedAt, HasOne, BelongsTo, ForeignKey } from "sequelize-typescript";
+import { Quote } from "src/quotes/models/quotes.model";
 
 @Table({
     timestamps: true,
@@ -16,8 +17,9 @@ export class Conversion extends Model {
     @Column({ type: DataTypes.STRING, allowNull: false })
     declare provider_ref: string
 
-    @Column({ type: DataTypes.JSON, allowNull: false })
-    declare quote: Record<string, unknown>;
+    @Column({ type: DataTypes.STRING, allowNull: false, unique: true })
+    @ForeignKey(() => Quote)
+    declare quote_id: string;
 
     @Column({ type: DataTypes.STRING, allowNull: false })
     declare status: string;
@@ -28,4 +30,11 @@ export class Conversion extends Model {
     @UpdatedAt
     declare updated_at: CreationOptional<Date>;
 
+    @BelongsTo(() => Quote, {
+        targetKey: "id",
+        foreignKey: "quote_id",
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE"
+    })
+    declare quote: Quote;
 }
