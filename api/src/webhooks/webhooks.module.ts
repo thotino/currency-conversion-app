@@ -1,12 +1,14 @@
 import { Module } from "@nestjs/common";
 import { WebhooksController } from "./webhooks.controller";
 import { WebhooksService } from "./webhooks.service";
-import { ConversionsModule } from "src/conversions/conversions.module";
+import { SequelizeModule } from "@nestjs/sequelize";
+import { Event } from "./models/events.model";
+import { WebhooksRepository } from "./webhooks.repository";
 
 @Module({
-    imports: [ConversionsModule],
+    imports: [SequelizeModule.forFeature([Event])],
     controllers: [WebhooksController],
     exports: [WebhooksService],
-    providers: [WebhooksService]
+    providers: [WebhooksService, WebhooksRepository]
 })
 export class WebhooksModule {}
