@@ -1,19 +1,18 @@
-import Quote from "./Quote";
 import type { ConversionStatus } from "src/types";
 
 export default class Conversion {
     #id: string;
     #userId: string;
     #status: ConversionStatus;
-    #quote: Quote
-    constructor(userId: string, idempotencyKey: string, quote: Quote, status: ConversionStatus) {
+    #quoteId: string
+    constructor(userId: string, idempotencyKey: string, quoteId: string, status: ConversionStatus) {
         this.#userId = userId;
         this.#status = status;
-        this.#quote = quote;
+        this.#quoteId = quoteId;
         this.#id = idempotencyKey;
     }
-    get quote() {
-        return this.#quote;
+    get quoteId() {
+        return this.#quoteId;
     }
     markAsCompleted() {
         this.#status = "COMPLETED";
@@ -27,7 +26,6 @@ export default class Conversion {
             id: this.#id,
             status: this.#status,
             userId: this.#userId,
-            quote: this.#quote
         }
 
     }

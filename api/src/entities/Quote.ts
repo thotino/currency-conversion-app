@@ -1,29 +1,42 @@
 import Money from "./Money";
 import { MoneyInterface } from "src/types";
 import { addSeconds, isPast } from "date-fns";
+import { randomUUID } from "node:crypto";
 export default class Quote {
+  #id: string;
   #source: Money;
   #target: Money;
   #fees: Money;
   #rate: number;
+  #consumed: boolean;
   #createdAt: Date;
   #expiresAt: Date;
   constructor(
+    id: string,
     source: Money,
     target: Money,
     rate: number,
     fees: Money,
     expiration?: Date,
+    consumed: boolean = false
   ) {
+    this.#id = id;
     this.#source = source;
     this.#target = target;
     this.#fees = fees;
     this.#rate = rate;
     this.#createdAt = new Date(Date.now());
     this.#expiresAt = expiration ?? addSeconds(this.#createdAt, 30);
+    this.#consumed = consumed
   }
   isExpired() {
     return isPast(this.#expiresAt);
+  }
+  isConsumed() {
+    return this.#consumed === true
+  }
+  get id() {
+    return this.#id;
   }
   get source() {
     return this.#source;
@@ -52,6 +65,7 @@ export default class Quote {
   }
 
   static from(
+    id: string,
     source: MoneyInterface,
     target: MoneyInterface,
     fees: MoneyInterface,
@@ -59,6 +73,7 @@ export default class Quote {
     expiration?: Date,
   ) {
     return new Quote(
+      id,
       Money.from(source.amount, source.currency),
       Money.from(target.amount, target.currency),
       rate,
@@ -69,6 +84,7 @@ export default class Quote {
 
   toJSON() {
     return {
+      id: this.#id,
       rate: this.#rate,
       source: this.#source,
       target: this.#target,
