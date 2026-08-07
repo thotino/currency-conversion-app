@@ -1,13 +1,31 @@
 -- Up Migration
-CREATE TABLE conversions (
-  id text PRIMARY KEY NOT NULL,
-  user_id text NOT NULL,
-  provider_ref text NOT NULL,
-  quote json NOT NULL,
-  status text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY,
+  source JSON NOT NULL,
+  target JSON NOT NULL,
+  fees JSON NOT NULL,
+  rate DOUBLE PRECISION NOT NULL,
+  consumed BOOLEAN NOT NULL DEFAULT FALSE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  provider_ref TEXT NOT NULL,
+  quote_id TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT fk_conversions_quote
+    FOREIGN KEY (quote_id)
+    REFERENCES quotes(id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
 );
 
 -- Down Migration
-DROP TABLE conversions;
+DROP TABLE IF EXISTS conversions;
+DROP TABLE IF EXISTS quotes;
