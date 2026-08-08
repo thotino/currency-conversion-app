@@ -61,6 +61,9 @@ export class ConversionsService {
     async findAll(userId: string) {
         return await this.conversionRepository.findAll(userId)
     }
+    async findOneByKey(idempotencyKey: string) {
+        return await this.conversionRepository.findByKey(idempotencyKey);
+    }
     async findOne(idempotencyKey: string, providerRef: string) {
         return await this.conversionRepository.findByKeyAndRef(idempotencyKey, providerRef);
     }

@@ -13,7 +13,7 @@ export class WebhooksWorker {
         setInterval(async () => {
             // Find all pending events
             for await (const pendingEvent of this.webhooksRepository.findAllPendingEvents()) {
-                const conversion = await this.conversionsService.findOneByKey(pendingEvent.payload.externalRef);
+                const conversion = await this.conversionsService.findOneByKey(pendingEvent.externalRef);
                 if (conversion != null) {
                     switch(pendingEvent.payload.status) {
                         case "accepted":
