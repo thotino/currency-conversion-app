@@ -8,9 +8,10 @@ import { WebhooksWorker } from "./webhooks.worker";
 import { ProviderModule } from "src/provider/provider.module";
 import { QuotesModule } from "src/quotes/quotes.module";
 import { ConversionsModule } from "src/conversions/conversions.module";
+import { Conversion } from "src/conversions/models/conversions.model";
 
 @Module({
-    imports: [SequelizeModule.forFeature([Event]), ProviderModule, QuotesModule, ConversionsModule],
+    imports: [SequelizeModule.forFeature([Event, Conversion]), ProviderModule, QuotesModule, ConversionsModule],
     controllers: [WebhooksController],
     exports: [WebhooksService, WebhooksWorker],
     providers: [WebhooksService, WebhooksRepository, WebhooksWorker]

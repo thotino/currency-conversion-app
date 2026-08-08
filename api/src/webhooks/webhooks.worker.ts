@@ -1,18 +1,24 @@
 import { Injectable } from "@nestjs/common";
 import { WebhooksRepository } from "./webhooks.repository";
 import { ConversionsService } from "src/conversions/conversions.service";
-
+enum webhookEventDataStatus {
+    ACCEPTED = "accepted",
+    EXECUTED = "executed",
+    REJECTED = "rejected"
+}
 @Injectable()
 export class WebhooksWorker {
     constructor(private readonly webhooksRepository: WebhooksRepository, private readonly conversionsService: ConversionsService) {}
     async run() {
-        while (true) {
-
+        setInterval(async () => {
             // Find all pending events
             for await (const pendingEvent of this.webhooksRepository.findAllPendingEvents()) {
-                const conversion = await this.conversionsService.findOne(pendingEvent.externalRef, pendingEvent.providerRef);
+                const conversion = await this.conversionsService.findOneByKey(pendingEvent.payload.externalRef);
                 if (conversion != null) {
                     switch(pendingEvent.payload.status) {
+                        case "accepted":
+                            await this.webhooksRepository.updateConversionAsSubmitted(pendingEvent, conversion);
+                            break;
                         case "executed":
                             await this.webhooksRepository.updateConversionAsCompleted(pendingEvent,conversion)
                             break;
@@ -25,6 +31,6 @@ export class WebhooksWorker {
             // For each event, find conversion
             // if conversion exists, update conversion and event
             // if conversion do not exists, do nothing
-        }
+        }, 1000 * 10)
     }
 }
