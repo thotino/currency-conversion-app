@@ -15,6 +15,7 @@ import { Conversion } from "./conversions/models/conversions.model";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { BalancesModule } from "./balances/balances.module";
 import { Quote } from "./quotes/models/quotes.model";
+
 const config: AppConfigService = new AppConfigService();
 @Module({
   imports: [
