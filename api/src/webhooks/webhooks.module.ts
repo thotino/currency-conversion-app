@@ -4,11 +4,15 @@ import { WebhooksService } from "./webhooks.service";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { Event } from "./models/events.model";
 import { WebhooksRepository } from "./webhooks.repository";
+import { WebhooksWorker } from "./webhooks.worker";
+import { ProviderModule } from "src/provider/provider.module";
+import { QuotesModule } from "src/quotes/quotes.module";
+import { ConversionsModule } from "src/conversions/conversions.module";
 
 @Module({
-    imports: [SequelizeModule.forFeature([Event])],
+    imports: [SequelizeModule.forFeature([Event]), ProviderModule, QuotesModule, ConversionsModule],
     controllers: [WebhooksController],
-    exports: [WebhooksService],
-    providers: [WebhooksService, WebhooksRepository]
+    exports: [WebhooksService, WebhooksWorker],
+    providers: [WebhooksService, WebhooksRepository, WebhooksWorker]
 })
 export class WebhooksModule {}

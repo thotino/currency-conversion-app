@@ -7,6 +7,6 @@ export class WebhooksController {
   constructor(readonly webhooksService: WebhooksService) {}
   @Post('provider')
   async receive(@Body() webhookEventData: WebhooksProviderDto) {
-    await this.webhooksService.handleEvent(webhookEventData)    
+    await this.webhooksService.handleEvent(webhookEventData) 
   }
 }
