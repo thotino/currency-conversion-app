@@ -1,0 +1,15 @@
+-- Up Migration
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY,
+  source JSON NOT NULL,
+  target JSON NOT NULL,
+  fees JSON NOT NULL,
+  rate DOUBLE PRECISION NOT NULL,
+  consumed BOOLEAN NOT NULL DEFAULT FALSE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Down Migration
+DROP TABLE IF EXISTS quotes;
