@@ -12,6 +12,9 @@ export default class Conversion {
         this.#quote = quote;
         this.#id = idempotencyKey;
     }
+    get id() {
+        return this.#id;
+    }
     get userId() {
         return this.#userId;
     }
