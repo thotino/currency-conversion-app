@@ -29,26 +29,18 @@ export async function postQuotes(
 }
 
 export async function postConversions(
-  source: { amount: number; currency: string },
-  target: { amount: number; currency: string },
-  fees: { amount: number; currency: string },
-  rate: number,
-  expiration: string,
+  quoteId: string
 ) {
-  const date = new Date().toISOString().split("T")[0];
+  // const date = new Date().toISOString().split("T")[0];
   const response = await fetch(`${API_URL}/conversions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-IDEMPOTENCY-KEY": `conversion-${USER_ID}-${date}-${source.amount}-${source.currency}-${target.currency}}`,
+      "X-IDEMPOTENCY-KEY": `conversion-${USER_ID}-${quoteId}`,
     },
     body: JSON.stringify({
       userId: USER_ID,
-      source,
-      target,
-      fees,
-      rate,
-      expiration,
+      quoteId,
     }),
   });
   if (!response.ok) {
@@ -59,6 +51,16 @@ export async function postConversions(
 
 export async function getConversions(userId: string = USER_ID) {
   const response = await fetch(`${API_URL}/conversions?userId=${userId}`, {
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getBalances(userId: string = USER_ID) {
+  const response = await fetch(`${API_URL}/balances?userId=${userId}`, {
     headers: { "Content-Type": "application/json" },
   });
   if (!response.ok) {

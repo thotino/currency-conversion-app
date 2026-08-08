@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { getHealth, postQuotes, postConversions, getConversions } from "./api";
+import { getHealth, postQuotes, postConversions, getConversions, getBalances } from "./api";
 
 export function App(): JSX.Element {
   const [health, setHealth] = useState<string>("loading…");
+  const [balances, setBalances] = useState("");
   const [amount, setAmount] = useState("");
   const [sourceCurrency, setSourceCurrency] = useState("EUR");
   const [targetCurrency, setTargetCurrency] = useState("USD");
@@ -24,12 +25,7 @@ export function App(): JSX.Element {
 
   async function convert(event) {
     event.preventDefault();
-    const source = quote.source;
-    const target = quote.target;
-    const expiration = quote.expiration;
-    const fees = quote.fees;
-    const rate = quote.rate;
-    await postConversions(source, target, fees, rate, expiration);
+    await postConversions(quote.id);
   }
 
   useEffect(() => {
@@ -40,10 +36,18 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     getConversions().then((conversions) => { 
-      console.log({conversions})
       setConversions(conversions); 
-    })
+    }).catch((error: unknown) => setConversions([]))
   }, [page]);
+
+  useEffect(() => {
+    getBalances().then((balancesSummary) => {
+      console.log({balancesSummary})
+      setBalances(JSON.stringify(balancesSummary.balance))
+    }).catch((error: unknown) => setBalances(`error: ${String(error)}`));
+    
+  }, []);
+
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
       <h1>Keewe — Currency Conversion</h1>
@@ -53,7 +57,7 @@ export function App(): JSX.Element {
 
       <div>
         <h2>Balances</h2>
-        <p>Current balances...</p>
+        <p>Current user balances: <code>{balances}</code></p>
       </div>
 
       <div>
@@ -148,6 +152,7 @@ export function App(): JSX.Element {
         <table>
           <thead>
             <tr>
+            <th>ID</th>
               <th>From</th>
               <th>To</th>
               <th>Status</th>
@@ -157,6 +162,9 @@ export function App(): JSX.Element {
           <tbody>
             {conversions.map((conversion) => (
               <tr key={conversion.id}>
+                <td>
+                  {conversion.id}
+                </td>
                 <td>
                   {conversion.quote.source.amount} {conversion.quote.source.currency}
                 </td>
