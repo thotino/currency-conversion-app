@@ -12,6 +12,6 @@ import { Quote } from 'src/quotes/models/quotes.model';
   imports: [SequelizeModule.forFeature([Conversion, Quote]), ProviderModule, QuotesModule],
   providers: [ConversionsService, ConversionsRepository],
   controllers: [ConversionsController],
-  exports: [ConversionsService]
+  exports: [ConversionsService, ConversionsRepository]
 })
 export class ConversionsModule {}
