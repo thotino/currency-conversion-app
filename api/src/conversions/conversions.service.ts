@@ -16,7 +16,6 @@ export class ConversionsService {
     readonly conversionRepository: ConversionsRepository,
   ) {}
   async create(userId: string, quoteId: string, idempotencyKey: string) {
-    // const quote = await this.quotesRepository.findOne(quoteId);
     const { quote, existingConversion } =
       await this.conversionRepository.createConversionReservation(
         quoteId,
@@ -70,12 +69,6 @@ export class ConversionsService {
   async findOneByKey(idempotencyKey: string) {
     return await this.conversionRepository.findByKey(idempotencyKey);
   }
-  // async findOne(idempotencyKey: string, providerRef: string) {
-  //   return await this.conversionRepository.findByKeyAndRef(
-  //     idempotencyKey,
-  //     providerRef,
-  //   );
-  // }
   async updateOne(conversion: Conversion) {
     return await this.conversionRepository.update(conversion);
   }

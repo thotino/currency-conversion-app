@@ -112,7 +112,7 @@ export class ConversionsRepository {
           user_id: userId,
           provider_ref: "",
           quote_id: quoteId,
-          status: "CREATED",
+          status: ConversionStatus.CREATED,
         },
         { transaction },
       );
