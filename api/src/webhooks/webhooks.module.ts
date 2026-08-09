@@ -11,9 +11,14 @@ import { ConversionsModule } from "src/conversions/conversions.module";
 import { Conversion } from "src/conversions/models/conversions.model";
 
 @Module({
-    imports: [SequelizeModule.forFeature([Event, Conversion]), ProviderModule, QuotesModule, ConversionsModule],
-    controllers: [WebhooksController],
-    exports: [WebhooksService, WebhooksWorker],
-    providers: [WebhooksService, WebhooksRepository, WebhooksWorker]
+  imports: [
+    SequelizeModule.forFeature([Event, Conversion]),
+    ProviderModule,
+    QuotesModule,
+    ConversionsModule,
+  ],
+  controllers: [WebhooksController],
+  exports: [WebhooksService, WebhooksWorker],
+  providers: [WebhooksService, WebhooksRepository, WebhooksWorker],
 })
 export class WebhooksModule {}

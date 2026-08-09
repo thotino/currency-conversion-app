@@ -8,16 +8,17 @@ enum webhookEventDataStatus {
 }
 @Injectable()
 export class WebhooksWorker {
+    timer: NodeJS.Timeout | null =null
     constructor(private readonly webhooksRepository: WebhooksRepository, private readonly conversionsService: ConversionsService) {}
     async run() {
-        setInterval(async () => {
+        this.timer = setInterval(async () => {
             // Find all pending events
             for await (const pendingEvent of this.webhooksRepository.findAllPendingEvents()) {
                 const conversion = await this.conversionsService.findOneByKey(pendingEvent.externalRef);
                 if (conversion != null) {
                     switch(pendingEvent.payload.status) {
                         case "accepted":
-                            await this.webhooksRepository.updateConversionAsSubmitted(pendingEvent, conversion);
+                            await this.webhooksRepository.updateConversionAsAccepted(pendingEvent, conversion);
                             break;
                         case "executed":
                             await this.webhooksRepository.updateConversionAsCompleted(pendingEvent,conversion)
@@ -32,5 +33,10 @@ export class WebhooksWorker {
             // if conversion exists, update conversion and event
             // if conversion do not exists, do nothing
         }, 1000 * 10)
+    }
+    async stop() {
+        if (this.timer != null) {
+            clearInterval(this.timer)
+        }
     }
 }
