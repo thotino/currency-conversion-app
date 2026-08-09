@@ -3,58 +3,219 @@ import { InjectModel } from "@nestjs/sequelize";
 import { Conversion as ConversionModel } from "./models/conversions.model";
 import Conversion from "src/entities/Conversion";
 import Quote from "src/entities/Quote";
-import { ConversionStatus } from "src/types";
+import { ConversionStatus } from "src/constants";
 import { Sequelize } from "sequelize-typescript";
 import { Quote as QuoteModel } from "src/quotes/models/quotes.model";
-
+interface ConversionReservationInterface {
+  quote: Quote | null;
+  existingConversion: Conversion | null;
+  created: boolean;
+}
 @Injectable()
 export class ConversionsRepository {
-    constructor(
-        private sequelize: Sequelize, 
-        @InjectModel(ConversionModel) readonly conversionModel: typeof ConversionModel,
-        @InjectModel(QuoteModel) readonly quoteModel: typeof QuoteModel
-    ) {}
-    private static format(instance: ConversionModel | null) {
-        if (instance == null) return null;
-        const quote = Quote.from(instance.quote.id, instance.quote.source, instance.quote.target, instance.quote.fees, instance.quote.rate, new Date(instance.quote.expires_at))
-        return new Conversion(instance.user_id, instance.id, quote, instance.status as ConversionStatus)
+  constructor(
+    private sequelize: Sequelize,
+    @InjectModel(ConversionModel)
+    readonly conversionModel: typeof ConversionModel,
+    @InjectModel(QuoteModel) readonly quoteModel: typeof QuoteModel,
+  ) {}
+
+  private static formatQuote(quoteInstance: QuoteModel | null) {
+    if (quoteInstance == null) return null;
+    return Quote.from(
+      quoteInstance.id,
+      quoteInstance.source,
+      quoteInstance.target,
+      quoteInstance.fees,
+      quoteInstance.rate,
+      new Date(quoteInstance.expires_at),
+    );
+  }
+  private static format(instance: ConversionModel | null) {
+    if (instance == null) return null;
+    const quote = ConversionsRepository.formatQuote(instance.quote)!;
+    return new Conversion(
+      instance.user_id,
+      instance.id,
+      quote,
+      instance.status as ConversionStatus,
+    );
+  }
+  async create(
+    idempotencyKey: string,
+    userId: string,
+    quoteId: string,
+    providerRef: string,
+    status: string,
+  ) {
+    const transaction = await this.sequelize.transaction();
+    try {
+      const quote = (await this.quoteModel.findByPk(quoteId))!;
+      await quote.update({ consumed: true }, { transaction });
+      const createdConversion = await this.conversionModel.create(
+        {
+          id: idempotencyKey,
+          user_id: userId,
+          provider_ref: providerRef,
+          quote_id: quoteId,
+          status: status,
+        },
+        { transaction, include: [{ model: QuoteModel, as: "quote" }] },
+      );
+
+      await transaction.commit();
+      return ConversionsRepository.format({
+        ...createdConversion,
+        quote,
+      } as ConversionModel);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
-    async create(idempotencyKey: string, userId: string, quoteId: string, providerRef: string, status: string) {
-        const transaction = await this.sequelize.transaction()
-        try {
-            const quote = (await this.quoteModel.findByPk(quoteId))!;
-            await quote.update({ consumed: true }, { transaction })
-            const createdConversion = await this.conversionModel.create({
-                id: idempotencyKey,
-                user_id: userId,
-                provider_ref: providerRef,
-                quote_id: quoteId,
-                status: status,
-            }, { transaction, include: [{ model: QuoteModel, as: "quote" }] });
-            
-            await transaction.commit()
-            return ConversionsRepository.format({...createdConversion, quote} as ConversionModel);
-        } catch (error) {
-            await transaction.rollback()
-            throw error;
-        }
+  }
+  async createConversionReservation(
+    quoteId: string,
+    idempotencyKey: string,
+    userId: string,
+  ) {
+    const transaction = await this.sequelize.transaction();
+    try {
+      const quote = await this.quoteModel.findByPk(quoteId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+
+      if (quote == null) {
+        return { quote: null, existingConversion: null, created: false };
+      }
+
+      const existingConversion = await this.conversionModel.findByPk(
+        idempotencyKey,
+        {
+          include: [{ model: QuoteModel, as: "quote" }],
+          transaction,
+        },
+      );
+
+      if (existingConversion != null) {
+        await transaction.commit();
+        return {
+          quote: ConversionsRepository.formatQuote(quote),
+          existingConversion,
+          created: false,
+        };
+      }
+
+      await this.conversionModel.create(
+        {
+          id: idempotencyKey,
+          user_id: userId,
+          provider_ref: "",
+          quote_id: quoteId,
+          status: "CREATED",
+        },
+        { transaction },
+      );
+      await quote.update({ consumed: true }, { transaction });
+
+      await transaction.commit();
+      return {
+        quote: ConversionsRepository.formatQuote(quote),
+        existingConversion: null,
+        created: true,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
-    async findAll(userId: string) {
-        const retrievedInstances =  await this.conversionModel.findAll({ where: {user_id: userId}, include: [{model: QuoteModel, as: "quote" }] })
-        return retrievedInstances.map(ConversionsRepository.format)
+  }
+  async updateWithProviderRefAndStatus(
+    idempotencyKey: string,
+    providerRef: string,
+    status: ConversionStatus = ConversionStatus.SUBMITTED,
+  ) {
+    const transaction = await this.sequelize.transaction();
+
+    try {
+      const conversion = await this.conversionModel.findByPk(idempotencyKey, {
+        transaction,
+      });
+
+      if (conversion == null) {
+        return null;
+      }
+
+      await conversion.update(
+        { provider_ref: providerRef, status },
+        { transaction },
+      );
+
+      await transaction.commit();
+      return this.findByKey(idempotencyKey);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
-    async findByKey(idempotencyKey: string) {
-        const retrievedInstance = await this.conversionModel.findByPk(idempotencyKey, {include: [{model: QuoteModel, as: "quote" }]})
-        return ConversionsRepository.format(retrievedInstance)
+  }
+  async markFailed(idempotencyKey: string) {
+    const transaction = await this.sequelize.transaction();
+
+    try {
+      const conversion = await this.conversionModel.findByPk(idempotencyKey, {
+        transaction,
+      });
+
+      if (conversion == null) {
+        return null;
+      }
+
+      await conversion.update({ status: "FAILED" }, { transaction });
+      await transaction.commit();
+
+      return this.findByKey(idempotencyKey);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
-    async findByKeyAndRef(idempotencyKey: string, providerRef: string) {
-        const retrievedInstance = await this.conversionModel.findOne({ where: { id: idempotencyKey, provider_ref: providerRef }, include: [{model: QuoteModel, as: "quote"}]})
-        return ConversionsRepository.format(retrievedInstance)
+  }
+  async findAll(userId: string) {
+    const retrievedInstances = await this.conversionModel.findAll({
+      where: { user_id: userId },
+      include: [{ model: QuoteModel, as: "quote" }],
+    });
+    return retrievedInstances.map(ConversionsRepository.format);
+  }
+  async findByKey(idempotencyKey: string) {
+    const retrievedInstance = await this.conversionModel.findByPk(
+      idempotencyKey,
+      { include: [{ model: QuoteModel, as: "quote" }] },
+    );
+    return ConversionsRepository.format(retrievedInstance);
+  }
+  async findByKeyAndRef(idempotencyKey: string, providerRef: string) {
+    const retrievedInstance = await this.conversionModel.findOne({
+      where: { id: idempotencyKey, provider_ref: providerRef },
+      include: [{ model: QuoteModel, as: "quote" }],
+    });
+    return ConversionsRepository.format(retrievedInstance);
+  }
+  async update(conversion: Conversion) {
+    const { id, status } = conversion.toJSON();
+    const [updatedCount] = await this.conversionModel.update(
+      { status },
+      { where: { id } },
+    );
+    if (updatedCount === 0) return null;
+    return this.findByKey(id);
+  }
+  async *findCreated() {
+    const conversions = await this.conversionModel.findAll({
+      where: { status: "CREATED" },
+      include: [{ model: QuoteModel, as: "quote" }],
+    });
+    if (conversions.length === 0) return null;
+    for (const conversion of conversions) {
+      yield ConversionsRepository.format(conversion);
     }
-    async update(conversion: Conversion) {
-        const {id, status} = conversion.toJSON();
-        const [updatedCount] = await this.conversionModel.update({ status }, { where: {id} })
-        if (updatedCount === 0) return null;
-        return this.findByKey(id)
-    }
+  }
 }

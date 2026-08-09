@@ -1,4 +1,4 @@
-import type { ConversionStatus } from "src/types";
+import { ConversionStatus } from "src/constants";
 import Quote from "./Quote";
 
 export default class Conversion {
@@ -21,13 +21,9 @@ export default class Conversion {
     get quote() {
         return this.#quote;
     }
-    markAsCompleted() {
-        this.#status = "COMPLETED";
-    }
-    markAsFailed() {
-        this.#status = "FAILED";
-    }
-    isCompleted() {return this.#status === "COMPLETED";}
+    
+    isCompleted() {return this.#status === ConversionStatus.COMPLETED;}
+    
     toJSON() {
         return {
             id: this.#id,
