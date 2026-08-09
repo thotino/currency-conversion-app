@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Currency } from "src/constants";
 import Money from "src/entities/Money";
-import Quote from "src/entities/Quote";
 import { ProviderClient } from "src/provider/provider.client";
 import { QuotesRepository } from "./quotes.repository";
 import { addSeconds, parseISO } from "date-fns";
@@ -17,7 +16,6 @@ export class QuotesService {
         const targetMoney = Money.from(parseFloat((amount * curRate).toFixed(2)), targetCurrency)
         const feesMoney = Money.from(1, sourceCurrency);
         const quote = await this.quotesRepository.create(sourceMoney, targetMoney, feesMoney, curRate, addSeconds(parseISO(ratesCreationDate), 30))
-        // const quote = new Quote(sourceMoney, targetMoney, curRate, feesMoney)
         return quote;
     }
 }
