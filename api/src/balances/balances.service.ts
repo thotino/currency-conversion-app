@@ -16,23 +16,23 @@ const INITIAL_BALANCE = new Balance(
 
 @Injectable()
 export class BalancesService {
-  constructor(
-    private readonly conversionsService: ConversionsService,
-  ) {}
+  constructor(private readonly conversionsService: ConversionsService) {}
   private static reducer(
     balance: Balance,
     conversion: Conversion | null,
   ): Balance {
-    const resBalance = new Balance(balance.userId, balance.balanceByCurrency)
+    const resBalance = new Balance(balance.userId, balance.balanceByCurrency);
     if (conversion !== null && conversion.isCompleted()) {
       return resBalance.applyConversion(conversion);
     }
     return resBalance;
   }
 
-    async buildBalanceOnDemand(userId: string) {
-        const conversions = await this.conversionsService.findAll(userId);
-        const currentBalance = conversions.reduce((balance, conversion) => {return BalancesService.reducer(balance, conversion)}, INITIAL_BALANCE)
-        return currentBalance;
-    }
+  async buildBalanceOnDemand(userId: string) {
+    const conversions = await this.conversionsService.findAll(userId);
+    const currentBalance = conversions.reduce((balance, conversion) => {
+      return BalancesService.reducer(balance, conversion);
+    }, INITIAL_BALANCE);
+    return currentBalance;
+  }
 }
