@@ -31,7 +31,6 @@ export async function postQuotes(
 export async function postConversions(
   quoteId: string
 ) {
-  // const date = new Date().toISOString().split("T")[0];
   const response = await fetch(`${API_URL}/conversions`, {
     method: "POST",
     headers: {

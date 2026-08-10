@@ -10,9 +10,6 @@ export function App(): JSX.Element {
 
   const [quote, setQuote] = useState(null);
   const [conversions, setConversions] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const pageSize = 5;
 
   async function computeQuotes() {
     const quote = await postQuotes(
@@ -23,7 +20,7 @@ export function App(): JSX.Element {
     setQuote(quote);
   }
 
-  async function convert(event) {
+  async function convert(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     await postConversions(quote.id);
   }
@@ -37,15 +34,14 @@ export function App(): JSX.Element {
   useEffect(() => {
     getConversions().then((conversions) => { 
       setConversions(conversions); 
-    }).catch((error: unknown) => setConversions([]))
-  }, [page]);
+    })
+  }, []);
 
   useEffect(() => {
     getBalances().then((balancesSummary) => {
       console.log({balancesSummary})
       setBalances(JSON.stringify(balancesSummary.balance))
     }).catch((error: unknown) => setBalances(`error: ${String(error)}`));
-    
   }, []);
 
   return (
@@ -176,18 +172,6 @@ export function App(): JSX.Element {
             ))}
           </tbody>
         </table>
-        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-          Previous
-        </button>
-
-        <span>Page {page}</span>
-
-        <button
-          disabled={page * pageSize >= conversions.length}
-          onClick={() => setPage(page + 1)}
-        >
-          Next
-        </button>
       </div>
     </main>
   );
