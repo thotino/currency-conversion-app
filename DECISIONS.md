@@ -1,7 +1,22 @@
 # DECISIONS
+Les entités métier:
+* `Money` qui associe un montant et une devise; il permet les opérations et les comparaisons financières
+* `Quote` qui représente une cotation, 
+* `Conversion` qui représente une opération de conversion
+* `Balance`
+
+Les workers indépendants:
+* `WebhooksWorker`: Il traite les évènements webhooks reçus et mets à jour les ordres de conversion.
+* `ConversionsWorker`: Il soumet au partenaire bancaire les ordres de conversion reçus et les mets à jour.
+
+Les hypothèses:
+* Solde initial unique par client: j'ai un client unique avec un solde initial à 1000 euros, 1000 dollars et 1000 pounds.
+* Frais de conversion initialisé: j'ai fixé les frais de conversion à une unité de la devise source.
+
+
 ## IDEMPOTENCE DE LA CREATION DES CONVERSIONS
 Il faut garantir l'idempotence du process de création de la conversion. Pour cela, je me base sur la clé d'idempotence généré côté client:
-* le client génère la clé et l'envoie dans l'en-tête dédié
+* le client génère la clé et l'envoie dans la requête de création de l'ordre de conversion, dans l'en-tête dédié
 * l'api intercepte la requête, vérifie en BDD si la clé a déjà été traitée
     * si la clé existe, l'api renvoit la conversion existante
     * si la clé est nouvelle, l'api traite la requête et renvoit la réponse
@@ -31,7 +46,9 @@ Si un auditeur souhaite connaître les soldes à une date donnée, il faudrait r
 J'ai mis en place une méthode qui, à partir d'un solde et d'une conversion, calcule un nouveau solde. Cette méthode pourra être utilisé à cette fin.
 
 ## RESTE À FAIRE
-* S'assurer de l'ordre dans lequel sont traités les évènements webhooks (s'assurer de traiter `accepted` avant `completed`)
+* Ajouter un process de réconciliation: il existe possiblement des ordres de conversion dont on n'a reçu aucun évènement webhook d'acceptation ou de mise à jour côté partenaire. Ces ordres restent donc en statut `SUBMITTED` ou `PENDING`. Il faudrait un process qui interroge leur statut chez le partenaire, compare avec leur statut actuel afin de les mettre à jour.
+* S'assurer de l'ordre dans lequel sont traités les évènements webhooks: si les évènements arrivent de manière désordonné, il faudrait assurer une cohérence dans leur traitement (ex.: s'assurer de traiter l'évènement `accepted` avant l'évènement `completed`)
 * Vérifier que la nouvelle conversion est possible en calculant le nouveau solde (s'assurer par exemple qu'on aura pas un solde négatif pour une devise)
 * Développer une table pour les soldes par client (actualisé lors du traitement d'une conversion)
-* Nettoyer en BDD les cotations non consommés
+* Ajouter un process de nettoyage en BDD des cotations non consommés et des évènements traités depuis un certain temps
+* Ajouter une pagination sur la route de récupération des conversions
