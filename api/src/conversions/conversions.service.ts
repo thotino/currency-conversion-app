@@ -16,7 +16,7 @@ export class ConversionsService {
     readonly conversionRepository: ConversionsRepository,
   ) {}
   async create(userId: string, quoteId: string, idempotencyKey: string) {
-    const { quote, existingConversion, isQuotePreviouslyConsumed } =
+    const { quote, existingConversion, createdConversion, isQuotePreviouslyConsumed } =
       await this.conversionRepository.createConversionReservation(
         quoteId,
         idempotencyKey,
@@ -34,7 +34,7 @@ export class ConversionsService {
     if (existingConversion != null) {
       return existingConversion;
     }
-    return await this.conversionRepository.findByKey(idempotencyKey);
+    return createdConversion;
     //TODO: check if balance is ok for this conversion.
   }
   async createConversionToProvider(

@@ -6,11 +6,8 @@ import Quote from "src/entities/Quote";
 import { ConversionStatus } from "src/constants";
 import { Sequelize } from "sequelize-typescript";
 import { Quote as QuoteModel } from "src/quotes/models/quotes.model";
-interface ConversionReservationInterface {
-  quote: Quote | null;
-  existingConversion: Conversion | null;
-  created: boolean;
-}
+
+
 @Injectable()
 export class ConversionsRepository {
   constructor(
@@ -87,16 +84,23 @@ export class ConversionsRepository {
       });
 
       if (quote == null) {
+        await transaction.commit();
         return { quote: null, existingConversion: null, created: false };
       }
       if (quote.consumed === true) {
-        return { quote: ConversionsRepository.formatQuote(quote), existingConversion: null, created: false, isQuotePreviouslyConsumed: true }
+        await transaction.commit();
+        return {
+          quote: ConversionsRepository.formatQuote(quote),
+          existingConversion: null,
+          createdConversion: null,
+          created: false,
+          isQuotePreviouslyConsumed: true,
+        };
       }
 
       const existingConversion = await this.conversionModel.findByPk(
         idempotencyKey,
         {
-          include: [{ model: QuoteModel, as: "quote" }],
           transaction,
         },
       );
@@ -105,12 +109,15 @@ export class ConversionsRepository {
         await transaction.commit();
         return {
           quote: ConversionsRepository.formatQuote(quote),
-          existingConversion,
+          existingConversion: ConversionsRepository.format({
+            ...existingConversion,
+            quote,
+          } as ConversionModel),
           created: false,
         };
       }
 
-      await this.conversionModel.create(
+      const createdConversion = await this.conversionModel.create(
         {
           id: idempotencyKey,
           user_id: userId,
@@ -126,6 +133,10 @@ export class ConversionsRepository {
       return {
         quote: ConversionsRepository.formatQuote(quote),
         existingConversion: null,
+        createdConversion: ConversionsRepository.format({
+          ...createdConversion,
+          quote,
+        } as ConversionModel),
         created: true,
       };
     } catch (error) {
