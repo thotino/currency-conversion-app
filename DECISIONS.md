@@ -52,3 +52,4 @@ J'ai mis en place une méthode qui, à partir d'un solde et d'une conversion, ca
 * Développer une table pour les soldes par client (actualisé lors du traitement d'une conversion)
 * Ajouter un process de nettoyage en BDD des cotations non consommés et des évènements traités depuis un certain temps
 * Ajouter une pagination sur la route de récupération des conversions
+* S'assurer que la devise source est bien différente de la devise cible
