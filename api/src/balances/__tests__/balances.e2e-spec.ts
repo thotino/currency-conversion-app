@@ -1,9 +1,8 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
-import { AppConfigService } from "../../config/app-config.service";
-import { BalancesModule } from "../balances.module";
 import { BalancesService } from "../balances.service";
+import { BalancesController } from "../balances.controller";
 
 describe("Balances", () => {
   let app: INestApplication;
@@ -11,17 +10,14 @@ describe("Balances", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [BalancesModule],
-    })
-      .overrideProvider(BalancesService)
-      .useValue(balancesService)
-      .overrideProvider(AppConfigService)
-      .useValue({
-        port: 3000,
-        databaseUrl: "postgres://postgres:postgres@localhost:5432/postgres",
-        providerBaseUrl: "http://provider:3001",
-      })
-      .compile();
+      controllers: [BalancesController],
+      providers: [
+        {
+          provide: BalancesService,
+          useValue: balancesService,
+        },
+      ],
+    }).compile();
     app = moduleRef.createNestApplication();
     await app.init();
   });
