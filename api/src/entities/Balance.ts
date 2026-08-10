@@ -31,6 +31,9 @@ export default class Balance {
     );
     return this;
   }
+  get userId() {
+    return this.#userId;
+  }
   get balanceByCurrency() {
     return this.#balanceByCurrency;
   }
