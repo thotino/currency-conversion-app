@@ -29,6 +29,7 @@ export class ConversionsRepository {
       quoteInstance.fees,
       quoteInstance.rate,
       new Date(quoteInstance.expires_at),
+      quoteInstance.consumed,
     );
   }
   private static format(instance: ConversionModel | null) {
@@ -87,6 +88,9 @@ export class ConversionsRepository {
 
       if (quote == null) {
         return { quote: null, existingConversion: null, created: false };
+      }
+      if (quote.consumed === true) {
+        return { quote: ConversionsRepository.formatQuote(quote), existingConversion: null, created: false, isQuotePreviouslyConsumed: true }
       }
 
       const existingConversion = await this.conversionModel.findByPk(

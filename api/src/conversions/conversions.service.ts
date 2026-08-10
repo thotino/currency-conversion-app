@@ -16,7 +16,7 @@ export class ConversionsService {
     readonly conversionRepository: ConversionsRepository,
   ) {}
   async create(userId: string, quoteId: string, idempotencyKey: string) {
-    const { quote, existingConversion } =
+    const { quote, existingConversion, isQuotePreviouslyConsumed } =
       await this.conversionRepository.createConversionReservation(
         quoteId,
         idempotencyKey,
@@ -28,12 +28,13 @@ export class ConversionsService {
     if (quote.isExpired()) {
       throw new ExpiredQuoteError(quote.expiration.toISOString());
     }
-    if (quote.isConsumed()) {
+    if (isQuotePreviouslyConsumed === true) {
       throw new AlreadyConsumedQuoteError(quote.id);
     }
     if (existingConversion != null) {
       return existingConversion;
     }
+    return await this.conversionRepository.findByKey(idempotencyKey);
     //TODO: check if balance is ok for this conversion.
   }
   async createConversionToProvider(

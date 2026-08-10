@@ -19,7 +19,7 @@ export class QuotesRepository {
       Money.from(instance.target.amount, instance.target.currency),
       instance.rate,
       Money.from(instance.fees.amount, instance.fees.currency),
-      instance.expires_at,
+      new Date(instance.expires_at), instance.consumed,
     );
   }
   async create(
@@ -36,6 +36,7 @@ export class QuotesRepository {
       fees,
       rate,
       expires_at: expiration,
+      consumed: false
     });
     return QuotesRepository.format(createdQuote);
   }
