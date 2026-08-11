@@ -13,7 +13,7 @@ import {
   tableName: "events",
 })
 export class Event extends Model {
-  @Column({ type: DataTypes.STRING, primaryKey: true })
+  @Column({ type: DataTypes.STRING, primaryKey: true, unique: true })
   declare id: string;
 
   @Column({ type: DataTypes.STRING, primaryKey: true })

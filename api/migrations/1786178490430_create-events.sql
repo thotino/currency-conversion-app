@@ -1,6 +1,6 @@
 -- Up Migration
 CREATE TABLE IF NOT EXISTS events (
-  id VARCHAR(255) NOT NULL,
+  id VARCHAR(255) NOT NULL UNIQUE,
   provider_ref VARCHAR(255) NOT NULL,
   external_ref VARCHAR(255) NOT NULL,
   status VARCHAR(255) NOT NULL,
