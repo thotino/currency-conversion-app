@@ -15,6 +15,8 @@ import { Conversion } from "./conversions/models/conversions.model";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { BalancesModule } from "./balances/balances.module";
 import { Quote } from "./quotes/models/quotes.model";
+import { Event } from "./webhooks/models/events.model";
+import { Balance } from "./balances/models/balances.model";
 
 const config: AppConfigService = new AppConfigService();
 @Module({
@@ -26,7 +28,7 @@ const config: AppConfigService = new AppConfigService();
     ConversionsModule,
     SequelizeModule.forRoot({
       uri: config.databaseUrl,
-      models: [Conversion, Quote],
+      models: [Conversion, Quote, Event, Balance],
       autoLoadModels: true,
     }),
     WebhooksModule,
