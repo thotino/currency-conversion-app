@@ -14,7 +14,8 @@
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create --migration-file-language sql",
     "test": "jest",
-    "test:e2e": "jest --config jest.e2e.config.js",
+    "test:e2e": "jest --config jest.e2e.config.js --detectOpenHandles",
+    "lint": "eslint .",
     "prettier": "prettier --write \"{,src/**/}*.{,ts}\""
   },
   "dependencies": {
@@ -44,6 +45,7 @@
     "@types/pg": "^8.11.10",
     "@types/sequelize": "^4.28.20",
     "eslint": "^9.39.5",
+    "eslint-plugin-jest": "^29.16.0",
     "globals": "^17.9.0",
     "jest": "^29.7.0",
     "jiti": "^2.7.0",
