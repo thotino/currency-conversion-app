@@ -20,26 +20,26 @@ import { Balance } from "./balances/models/balances.model";
 
 const config: AppConfigService = new AppConfigService();
 @Module({
-  imports: [
-    AppConfigModule,
-    DatabaseModule,
-    ProviderModule,
-    QuotesModule,
-    ConversionsModule,
-    SequelizeModule.forRoot({
-      uri: config.databaseUrl,
-      models: [Conversion, Quote, Event, Balance],
-      autoLoadModels: true,
-    }),
-    WebhooksModule,
-    BalancesModule
-  ],
-  controllers: [
-    HealthController,
-    QuotesController,
-    ConversionsController,
-    WebhooksController,
-    BalancesController,
-  ],
+    imports: [
+        AppConfigModule,
+        DatabaseModule,
+        ProviderModule,
+        QuotesModule,
+        ConversionsModule,
+        SequelizeModule.forRoot({
+            uri: config.databaseUrl,
+            models: [Conversion, Quote, Event, Balance],
+            autoLoadModels: true,
+        }),
+        WebhooksModule,
+        BalancesModule,
+    ],
+    controllers: [
+        HealthController,
+        QuotesController,
+        ConversionsController,
+        WebhooksController,
+        BalancesController,
+    ],
 })
 export class AppModule {}

@@ -6,12 +6,12 @@ import { WebhooksRepository } from "./webhooks.repository";
 enum ConversionsEventsTypes {
     EXECUTED = "conversion.executed",
     ACCEPTED = "conversion.accepted",
-    REJECTED = "conversion.rejected"
+    REJECTED = "conversion.rejected",
 }
 @Injectable()
 export class WebhooksService {
     constructor(private webhooksRepository: WebhooksRepository) {}
     async handleEvent(event: WebhooksProviderDto) {
-        await this.webhooksRepository.save(event)
+        await this.webhooksRepository.save(event);
     }
 }

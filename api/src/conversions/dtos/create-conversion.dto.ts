@@ -1,11 +1,9 @@
-import {
-  IsString,
-} from "class-validator";
+import { IsString } from "class-validator";
 
 export class CreateConversionDto {
-  @IsString()
-  declare userId: string;
+    @IsString()
+    declare userId: string;
 
-  @IsString()
-  declare quoteId: string;
+    @IsString()
+    declare quoteId: string;
 }

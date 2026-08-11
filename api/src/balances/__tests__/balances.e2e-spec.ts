@@ -5,30 +5,30 @@ import { BalancesService } from "../balances.service";
 import { BalancesController } from "../balances.controller";
 
 describe("Balances", () => {
-  let app: INestApplication;
-  const balancesService = { buildBalanceOnDemand: jest.fn() };
+    let app: INestApplication;
+    const balancesService = { buildBalanceOnDemand: jest.fn() };
 
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      controllers: [BalancesController],
-      providers: [
-        {
-          provide: BalancesService,
-          useValue: balancesService,
-        },
-      ],
-    }).compile();
-    app = moduleRef.createNestApplication();
-    await app.init();
-  });
-  afterAll(async () => {
-    await app.close();
-  });
-
-  test("GET /balances", async () => {
-    balancesService.buildBalanceOnDemand.mockResolvedValue({
-      userId: "user-1",
+    beforeAll(async () => {
+        const moduleRef = await Test.createTestingModule({
+            controllers: [BalancesController],
+            providers: [
+                {
+                    provide: BalancesService,
+                    useValue: balancesService,
+                },
+            ],
+        }).compile();
+        app = moduleRef.createNestApplication();
+        await app.init();
     });
-    return request(app.getHttpServer()).get("/balances").expect(200);
-  });
+    afterAll(async () => {
+        await app.close();
+    });
+
+    test("GET /balances", async () => {
+        balancesService.buildBalanceOnDemand.mockResolvedValue({
+            userId: "user-1",
+        });
+        return request(app.getHttpServer()).get("/balances").expect(200);
+    });
 });

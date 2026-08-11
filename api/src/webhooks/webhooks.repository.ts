@@ -7,109 +7,109 @@ import { Sequelize } from "sequelize-typescript";
 import Conversion from "src/entities/Conversion";
 import { ConversionStatus } from "src/constants";
 interface Event {
-  id: string;
-  externalRef: string;
-  providerRef: string;
-  occuredAt: Date;
-  payload: Record<string, string>;
+    id: string;
+    externalRef: string;
+    providerRef: string;
+    occuredAt: Date;
+    payload: Record<string, string>;
 }
 enum EventStatus {
-  PENDING = "PENDING",
-  COMPLETED = "COMPLETED",
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
 }
 @Injectable()
 export class WebhooksRepository {
-  constructor(
-    private sequelize: Sequelize,
-    @InjectModel(EventModel) readonly eventModel: typeof EventModel,
-    @InjectModel(ConversionModel)
-    readonly conversionModel: typeof ConversionModel,
-  ) {}
-  private static format(instance: EventModel) {
-    return {
-      id: instance.id,
-      externalRef: instance.external_ref,
-      providerRef: instance.provider_ref,
-      occuredAt: instance.occured_at,
-      payload: instance.payload,
-    } as Event;
-  }
-  async save(event: WebhooksProviderDto) {
-    await this.eventModel.create(
-      {
-        id: event.eventId,
-        provider_ref: event.providerRef,
-        external_ref: event.data.externalReference,
-        status: EventStatus.PENDING,
-        occured_at: event.occurredAt,
-        payload: event.data,
-      },
-      { ignoreDuplicates: true },
-    );
-  }
+    constructor(
+        private sequelize: Sequelize,
+        @InjectModel(EventModel) readonly eventModel: typeof EventModel,
+        @InjectModel(ConversionModel)
+        readonly conversionModel: typeof ConversionModel,
+    ) {}
+    private static format(instance: EventModel) {
+        return {
+            id: instance.id,
+            externalRef: instance.external_ref,
+            providerRef: instance.provider_ref,
+            occuredAt: instance.occured_at,
+            payload: instance.payload,
+        } as Event;
+    }
+    async save(event: WebhooksProviderDto) {
+        await this.eventModel.create(
+            {
+                id: event.eventId,
+                provider_ref: event.providerRef,
+                external_ref: event.data.externalReference,
+                status: EventStatus.PENDING,
+                occured_at: event.occurredAt,
+                payload: event.data,
+            },
+            { ignoreDuplicates: true },
+        );
+    }
 
-  async *findAllPendingEvents() {
-    const events = await this.eventModel.findAll({
-      where: {
-        status: EventStatus.PENDING,
-      },
-      order: [["occured_at", "ASC"]],
-    });
-    if (events.length === 0) return null;
-    for (const event of events) {
-      yield WebhooksRepository.format(event);
+    async *findAllPendingEvents() {
+        const events = await this.eventModel.findAll({
+            where: {
+                status: EventStatus.PENDING,
+            },
+            order: [["occured_at", "ASC"]],
+        });
+        if (events.length === 0) return null;
+        for (const event of events) {
+            yield WebhooksRepository.format(event);
+        }
     }
-  }
-  async updateConversionAsAccepted(event: Event, conversion: Conversion) {
-    const transaction = await this.sequelize.transaction();
-    try {
-      await this.eventModel.update(
-        { status: EventStatus.COMPLETED },
-        { transaction, where: { id: event.id } },
-      );
-      await this.conversionModel.update(
-        { status: ConversionStatus.ACCEPTED },
-        { transaction, where: { id: conversion.id } },
-      );
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
+    async updateConversionAsAccepted(event: Event, conversion: Conversion) {
+        const transaction = await this.sequelize.transaction();
+        try {
+            await this.eventModel.update(
+                { status: EventStatus.COMPLETED },
+                { transaction, where: { id: event.id } },
+            );
+            await this.conversionModel.update(
+                { status: ConversionStatus.ACCEPTED },
+                { transaction, where: { id: conversion.id } },
+            );
+            await transaction.commit();
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
-  }
-  async updateConversionAsCompleted(event: Event, conversion: Conversion) {
-    const transaction = await this.sequelize.transaction();
-    try {
-      await this.eventModel.update(
-        { status: EventStatus.COMPLETED },
-        { transaction, where: { id: event.id } },
-      );
-      await this.conversionModel.update(
-        { status: ConversionStatus.COMPLETED },
-        { transaction, where: { id: conversion.id } },
-      );
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
+    async updateConversionAsCompleted(event: Event, conversion: Conversion) {
+        const transaction = await this.sequelize.transaction();
+        try {
+            await this.eventModel.update(
+                { status: EventStatus.COMPLETED },
+                { transaction, where: { id: event.id } },
+            );
+            await this.conversionModel.update(
+                { status: ConversionStatus.COMPLETED },
+                { transaction, where: { id: conversion.id } },
+            );
+            await transaction.commit();
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
-  }
 
-  async updateConversionAsRejected(event: Event, conversion: Conversion) {
-    const transaction = await this.sequelize.transaction();
-    try {
-      await this.eventModel.update(
-        { status: EventStatus.COMPLETED },
-        { transaction, where: { id: event.id } },
-      );
-      await this.conversionModel.update(
-        { status: ConversionStatus.FAILED },
-        { transaction, where: { id: conversion.id } },
-      );
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
+    async updateConversionAsRejected(event: Event, conversion: Conversion) {
+        const transaction = await this.sequelize.transaction();
+        try {
+            await this.eventModel.update(
+                { status: EventStatus.COMPLETED },
+                { transaction, where: { id: event.id } },
+            );
+            await this.conversionModel.update(
+                { status: ConversionStatus.FAILED },
+                { transaction, where: { id: conversion.id } },
+            );
+            await transaction.commit();
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
-  }
 }

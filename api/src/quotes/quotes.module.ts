@@ -9,6 +9,6 @@ import { QuotesRepository } from "./quotes.repository";
     imports: [SequelizeModule.forFeature([Quote]), ProviderModule],
     providers: [QuotesService, QuotesRepository],
     controllers: [QuotesController],
-    exports: [QuotesService, QuotesRepository]
+    exports: [QuotesService, QuotesRepository],
 })
 export class QuotesModule {}

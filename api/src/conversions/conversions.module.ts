@@ -10,13 +10,13 @@ import { Quote } from "src/quotes/models/quotes.model";
 import { ConversionsWorker } from "./conversions.worker";
 
 @Module({
-  imports: [
-    SequelizeModule.forFeature([Conversion, Quote]),
-    ProviderModule,
-    QuotesModule,
-  ],
-  providers: [ConversionsService, ConversionsRepository, ConversionsWorker],
-  controllers: [ConversionsController],
-  exports: [ConversionsService, ConversionsRepository, ConversionsWorker],
+    imports: [
+        SequelizeModule.forFeature([Conversion, Quote]),
+        ProviderModule,
+        QuotesModule,
+    ],
+    providers: [ConversionsService, ConversionsRepository, ConversionsWorker],
+    controllers: [ConversionsController],
+    exports: [ConversionsService, ConversionsRepository, ConversionsWorker],
 })
 export class ConversionsModule {}

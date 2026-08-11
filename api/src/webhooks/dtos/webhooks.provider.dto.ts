@@ -1,5 +1,12 @@
 import { Type } from "class-transformer";
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
+import {
+    IsDateString,
+    IsEnum,
+    IsNumber,
+    IsOptional,
+    IsString,
+    ValidateNested,
+} from "class-validator";
 import { Currency } from "src/constants";
 
 class WebhooksProviderDataDto {
@@ -22,17 +29,17 @@ class WebhooksProviderDataDto {
     @IsNumber()
     @IsOptional()
     sourceAmount?: number;
-    
+
     @Type(() => Number)
     @IsNumber()
     @IsOptional()
     rate?: number;
-    
+
     @Type(() => Number)
     @IsNumber()
     @IsOptional()
     targetAmount?: number;
-    
+
     @IsString()
     @IsOptional()
     reasonCode?: string;
