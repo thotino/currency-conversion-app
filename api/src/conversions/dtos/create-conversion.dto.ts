@@ -1,9 +1,11 @@
-import { IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
 
 export class CreateConversionDto {
     @IsString()
-    declare userId: string;
+    @IsNotEmpty()
+    userId!: string;
 
     @IsString()
-    declare quoteId: string;
+    @IsNotEmpty()
+    quoteId!: string;
 }

@@ -3,6 +3,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { ConversionsController } from "../conversions.controller";
 import { ConversionsService } from "../conversions.service";
+import { QuoteNotFoundError } from "src/errors/QuoteNotFoundError";
 
 describe("Conversions", () => {
     let app: INestApplication;
@@ -29,10 +30,19 @@ describe("Conversions", () => {
         await app.close();
     });
 
-    test("POST /conversions", async () => {
-        conversionsService
-            .create()
-            .mockRejectedValueOnce(new QuoteNotFoundError());
-        return request(app.getHttpServer()).post("/conversions").expect(404);
+    describe("Create a new conversion", () => {
+        const quoteId = "QUOTE-ID"
+        const userId = "USER-ID"
+        test("should return a 400 response if quote id is not provided", async () => {
+            const response  = await request(app.getHttpServer()).post("/conversions").send({ userId: userId,  });
+            expect(response.status).toEqual(400);
+            expect(response.body.message).toEqual("QUOTE_NOT_FOUND_ERROR")
+        });
+        test("should return a 404 response if no quote is found", async () => {
+            conversionsService.create.mockRejectedValueOnce(new QuoteNotFoundError(quoteId));
+            const response  = await request(app.getHttpServer()).post("/conversions").send({ userId: userId,  });
+            expect(response.status).toEqual(404);
+            expect(response.body.message).toEqual("QUOTE_NOT_FOUND_ERROR")
+        });
     });
 });

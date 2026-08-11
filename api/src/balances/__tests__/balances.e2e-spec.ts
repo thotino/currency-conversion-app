@@ -26,7 +26,7 @@ describe("Balances", () => {
     });
 
     test("GET /balances", async () => {
-        balancesService.buildBalanceOnDemand.mockResolvedValue({
+        balancesService.buildBalanceOnDemand.mockResolvedValueOnce({
             userId: "user-1",
         });
         return request(app.getHttpServer()).get("/balances").expect(200);
