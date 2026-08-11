@@ -15,7 +15,7 @@ Concrètement, dans le cas d'espèce, la méthode qui orchestre la création d'u
 * si une conversion existe, elle est retournée au client
 * si aucune conversion n'existe, elle est créé et retournée au client 
 
-J'ai très vite rencontré un problème de concurrence (une race condition de type TOCTOU): si plusieurs requêtes arrivent au même moment, elles peuvent essayer d'écrire en base au même moment. J'ai donc essayé une version qui consiste à traiter la création de la conversion comme une opération atomique de bout en bout: une transaction qui réserve la cotation avec un verrou, vérifie si une conversion avec la clé d'idempotence existe, crée une conversion si nécessaire et marque la cotation comme consommée.
+J'ai très vite rencontré un problème de concurrence (une race condition de type TOCTOU): si plusieurs requêtes arrivent au même moment, elles peuvent essayer d'écrire en base au même moment. J'ai donc essayé une version qui consiste à traiter la création de la conversion comme une opération atomique de bout en bout: une transaction qui réserve la cotation avec un verrou, vérifie si une conversion avec la clé d'idempotence existe, crée une conversion si nécessaire et marque la cotation comme consommée. Ainsi, si plusieurs requêtes arrivent au même moment, la première est traitée mais les suivantes reçoivent une erreur de type 400 car la cotation a déjà été consommée.
 
 Pour garantir l'idempotence de cette opération, je me base donc sur la clé d'idempotence (la vrai clé d'unicité), je verrouille la cotation lors de la création de la conversion dans une opération atomique, je sépare la création auprès du provider distant de la création locale.
 
