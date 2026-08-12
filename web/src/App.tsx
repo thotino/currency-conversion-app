@@ -39,9 +39,8 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     getBalances().then((balancesSummary) => {
-      console.log({balancesSummary})
       setBalances(JSON.stringify(balancesSummary.balance))
-    }).catch((error: unknown) => setBalances(`error: ${String(error)}`));
+    });
   }, []);
 
   return (
