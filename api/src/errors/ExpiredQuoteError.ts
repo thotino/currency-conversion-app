@@ -1,4 +1,6 @@
-export class ExpiredQuoteError extends Error {
+import { ServiceErrorInterface } from "src/errors";
+
+export class ExpiredQuoteError extends Error implements ServiceErrorInterface {
     code: string = "EXPIRED_QUOTE";
     value: { expiration: string };
     constructor(expirationDate: string) {

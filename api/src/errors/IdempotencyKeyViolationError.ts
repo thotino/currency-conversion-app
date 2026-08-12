@@ -1,4 +1,9 @@
-export class IdempotencyKeyViolationError extends Error {
+import { ServiceErrorInterface } from "src/errors";
+
+export class IdempotencyKeyViolationError
+    extends Error
+    implements ServiceErrorInterface
+{
     code: string = "DUPLICATED_IDEMPOTENCY_KEY";
     value: { key: string };
     constructor(key: string) {
