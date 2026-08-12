@@ -5,7 +5,6 @@ import {
     Model,
     CreatedAt,
     UpdatedAt,
-    BelongsTo,
     HasOne,
 } from "sequelize-typescript";
 import { Conversion } from "src/conversions/models/conversions.model";

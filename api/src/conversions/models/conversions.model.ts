@@ -5,7 +5,6 @@ import {
     Column,
     CreatedAt,
     UpdatedAt,
-    HasOne,
     BelongsTo,
     ForeignKey,
 } from "sequelize-typescript";

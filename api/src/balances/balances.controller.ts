@@ -1,9 +1,4 @@
-import {
-    Controller,
-    Get,
-    NotImplementedException,
-    Query,
-} from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { BalancesService } from "./balances.service";
 
 @Controller("balances")

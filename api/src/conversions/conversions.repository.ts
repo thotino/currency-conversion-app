@@ -38,38 +38,6 @@ export class ConversionsRepository {
             instance.status as ConversionStatus,
         );
     }
-    async create(
-        idempotencyKey: string,
-        userId: string,
-        quoteId: string,
-        providerRef: string,
-        status: string,
-    ) {
-        const transaction = await this.sequelize.transaction();
-        try {
-            const quote = (await this.quoteModel.findByPk(quoteId))!;
-            await quote.update({ consumed: true }, { transaction });
-            const createdConversion = await this.conversionModel.create(
-                {
-                    id: idempotencyKey,
-                    user_id: userId,
-                    provider_ref: providerRef,
-                    quote_id: quoteId,
-                    status: status,
-                },
-                { transaction, include: [{ model: QuoteModel, as: "quote" }] },
-            );
-
-            await transaction.commit();
-            return ConversionsRepository.format({
-                ...createdConversion,
-                quote,
-            } as ConversionModel);
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
     async createConversionReservation(
         quoteId: string,
         idempotencyKey: string,
@@ -219,22 +187,6 @@ export class ConversionsRepository {
         );
         return ConversionsRepository.format(retrievedInstance);
     }
-    // async findByKeyAndRef(idempotencyKey: string, providerRef: string) {
-    //   const retrievedInstance = await this.conversionModel.findOne({
-    //     where: { id: idempotencyKey, provider_ref: providerRef },
-    //     include: [{ model: QuoteModel, as: "quote" }],
-    //   });
-    //   return ConversionsRepository.format(retrievedInstance);
-    // }
-    // async update(conversion: Conversion) {
-    //   const { id, status } = conversion.toJSON();
-    //   const [updatedCount] = await this.conversionModel.update(
-    //     { status },
-    //     { where: { id } },
-    //   );
-    //   if (updatedCount === 0) return null;
-    //   return this.findByKey(id);
-    // }
     async *findCreated() {
         const conversions = await this.conversionModel.findAll({
             where: { status: ConversionStatus.CREATED },

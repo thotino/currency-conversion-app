@@ -23,8 +23,10 @@ export class ConversionsController {
         @Headers("X-Idempotency-Key") idempotencyKey: string,
     ) {
         try {
-            if(!idempotencyKey) {
-                throw new BadRequestException("X-Idempotency-Key header is required")
+            if (!idempotencyKey) {
+                throw new BadRequestException(
+                    "X-Idempotency-Key header is required",
+                );
             }
             const conversion = await this.conversionsService.create(
                 body.userId,
