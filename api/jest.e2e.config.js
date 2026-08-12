@@ -10,4 +10,5 @@ module.exports = {
     '^src/(.*)$': '<rootDir>/$1',
   },
   testEnvironment: 'node',
+  clearMocks: true,
 };
