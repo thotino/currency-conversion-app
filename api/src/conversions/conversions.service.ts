@@ -2,17 +2,14 @@ import { Injectable } from "@nestjs/common";
 import Quote from "src/entities/Quote";
 import { ProviderClient } from "src/provider/provider.client";
 import { ConversionsRepository } from "./conversions.repository";
-import Conversion from "src/entities/Conversion";
 import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import { QuoteNotFoundError } from "src/errors/QuoteNotFoundError";
-import { QuotesRepository } from "src/quotes/quotes.repository";
 import { AlreadyConsumedQuoteError } from "src/errors/AlreadyConsumedQuoteError";
 
 @Injectable()
 export class ConversionsService {
     constructor(
         readonly providerClient: ProviderClient,
-        readonly quotesRepository: QuotesRepository,
         readonly conversionRepository: ConversionsRepository,
     ) {}
     async create(userId: string, quoteId: string, idempotencyKey: string) {
@@ -70,7 +67,4 @@ export class ConversionsService {
     async findOneByKey(idempotencyKey: string) {
         return await this.conversionRepository.findByKey(idempotencyKey);
     }
-    // async updateOne(conversion: Conversion) {
-    //   return await this.conversionRepository.update(conversion);
-    // }
 }
