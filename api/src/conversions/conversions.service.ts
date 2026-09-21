@@ -4,7 +4,6 @@ import { ProviderClient } from "src/provider/provider.client";
 import { ConversionsRepository } from "./conversions.repository";
 import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import { QuoteNotFoundError } from "src/errors/QuoteNotFoundError";
-import { AlreadyConsumedQuoteError } from "src/errors/AlreadyConsumedQuoteError";
 
 @Injectable()
 export class ConversionsService {
@@ -17,7 +16,6 @@ export class ConversionsService {
             quote,
             existingConversion,
             createdConversion,
-            isQuotePreviouslyConsumed,
         } = await this.conversionRepository.createConversionReservation(
             quoteId,
             idempotencyKey,
@@ -28,9 +26,6 @@ export class ConversionsService {
         }
         if (quote.isExpired()) {
             throw new ExpiredQuoteError(quote.expiration.toISOString());
-        }
-        if (isQuotePreviouslyConsumed === true) {
-            throw new AlreadyConsumedQuoteError(quote.id);
         }
         if (existingConversion != null) {
             return existingConversion;

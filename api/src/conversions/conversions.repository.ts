@@ -65,7 +65,6 @@ export class ConversionsRepository {
                     existingConversion: null,
                     createdConversion: null,
                     created: false,
-                    isQuotePreviouslyConsumed: true,
                 };
             }
 

@@ -39,7 +39,6 @@ export class ConversionsController {
                 throw new NotFoundException(error.code, { cause: error });
             }
             if (
-                error instanceof AlreadyConsumedQuoteError ||
                 error instanceof ExpiredQuoteError
             ) {
                 throw new BadRequestException(error.code, { cause: error });

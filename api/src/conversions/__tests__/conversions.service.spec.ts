@@ -75,20 +75,20 @@ describe("Conversions", () => {
                 conversionsService.create(userId, quoteId, idempotencyKey),
             ).rejects.toThrow(ExpiredQuoteError);
         });
-        test("should throw an error if the retrieved quote was already consumed", async () => {
-            conversionsRepository.createConversionReservation.mockResolvedValueOnce(
-                {
-                    quote: consumedQuote,
-                    created: false,
-                    existingConversion: null,
-                    createdConversion: null,
-                    isQuotePreviouslyConsumed: true,
-                },
-            );
-            await expect(
-                conversionsService.create(userId, quoteId, idempotencyKey),
-            ).rejects.toThrow(AlreadyConsumedQuoteError);
-        });
+        // test("should throw an error if the retrieved quote was already consumed", async () => {
+        //     conversionsRepository.createConversionReservation.mockResolvedValueOnce(
+        //         {
+        //             quote: consumedQuote,
+        //             created: false,
+        //             existingConversion: null,
+        //             createdConversion: null,
+        //             isQuotePreviouslyConsumed: true,
+        //         },
+        //     );
+        //     await expect(
+        //         conversionsService.create(userId, quoteId, idempotencyKey),
+        //     ).rejects.toThrow(AlreadyConsumedQuoteError);
+        // });
         test("should return the existing conversion", async () => {
             conversionsRepository.createConversionReservation.mockResolvedValueOnce(
                 {
