@@ -61,7 +61,7 @@ describe("Conversions", () => {
         const conversion = new Conversion(userId, idempotencyKey, expiredQuote, ConversionStatus.CREATED)
         test("should throw an error if quote is not found", async () => {
             conversionsRepository.createConversionReservation.mockResolvedValueOnce(
-                { quote: null, created: false, existingConversion: null },
+                { quote: null, created: false, conversion: null },
             );
             await expect(
                 conversionsService.create(userId, quoteId, idempotencyKey),
@@ -69,7 +69,7 @@ describe("Conversions", () => {
         });
         test("should throw an error if the retrieved quote is expired", async () => {
             conversionsRepository.createConversionReservation.mockResolvedValueOnce(
-                { quote: expiredQuote, created: false, existingConversion: null },
+                { quote: expiredQuote, created: false, conversion: null },
             );
             await expect(
                 conversionsService.create(userId, quoteId, idempotencyKey),
@@ -94,7 +94,7 @@ describe("Conversions", () => {
                 {
                     quote: validQuote,
                     created: false,
-                    existingConversion: conversion,
+                    conversion,
                 },
             );
             await expect(

@@ -1,6 +1,7 @@
 -- Up Migration
 CREATE TABLE IF NOT EXISTS conversions (
   id TEXT PRIMARY KEY,
+  idempotency_key TEXT NOT NULL UNIQUE,
   user_id TEXT NOT NULL,
   provider_ref TEXT NOT NULL,
   quote_id TEXT NOT NULL UNIQUE,

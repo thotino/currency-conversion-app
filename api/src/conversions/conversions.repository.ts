@@ -54,60 +54,31 @@ export class ConversionsRepository {
                 await transaction.commit();
                 return {
                     quote: null,
-                    existingConversion: null,
+                    conversion: null,
                     created: false,
                 };
             }
-            if (quote.consumed === true) {
-                await transaction.commit();
-                return {
-                    quote: ConversionsRepository.formatQuote(quote),
-                    existingConversion: null,
-                    createdConversion: null,
-                    created: false,
-                };
-            }
-
-            const existingConversion = await this.conversionModel.findByPk(
-                idempotencyKey,
-                {
+            const [conversion, created] =
+                await this.conversionModel.findOrCreate({
                     transaction,
-                },
-            );
+                    where: { idempotency_key: idempotencyKey },
+                    defaults: {
+                        id: crypto.randomUUID(),
+                        idempotency_key: idempotencyKey,
+                        user_id: userId,
+                        provider_ref: "",
+                        quote_id: quoteId,
+                        status: ConversionStatus.CREATED,
+                    },
+                });
 
-            if (existingConversion != null) {
-                await transaction.commit();
-                return {
-                    quote: ConversionsRepository.formatQuote(quote),
-                    existingConversion: ConversionsRepository.format({
-                        ...existingConversion,
-                        quote,
-                    } as ConversionModel),
-                    created: false,
-                };
-            }
-
-            const createdConversion = await this.conversionModel.create(
-                {
-                    id: idempotencyKey,
-                    user_id: userId,
-                    provider_ref: "",
-                    quote_id: quoteId,
-                    status: ConversionStatus.CREATED,
-                },
-                { transaction },
-            );
             await quote.update({ consumed: true }, { transaction });
 
             await transaction.commit();
             return {
                 quote: ConversionsRepository.formatQuote(quote),
-                existingConversion: null,
-                createdConversion: ConversionsRepository.format({
-                    ...createdConversion,
-                    quote,
-                } as ConversionModel),
-                created: true,
+                conversion: ConversionsRepository.format({...conversion, quote} as ConversionModel), 
+                created
             };
         } catch (error) {
             await transaction.rollback();

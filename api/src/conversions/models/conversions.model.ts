@@ -7,6 +7,7 @@ import {
     UpdatedAt,
     BelongsTo,
     ForeignKey,
+    AllowNull,
 } from "sequelize-typescript";
 import { Quote } from "src/quotes/models/quotes.model";
 
@@ -18,6 +19,9 @@ import { Quote } from "src/quotes/models/quotes.model";
 export class Conversion extends Model {
     @Column({ type: DataTypes.STRING, primaryKey: true, allowNull: false })
     declare id: string;
+
+    @Column({ type: DataTypes.STRING, allowNull: false, unique: true })
+    declare idempotency_key: string;
 
     @Column({ type: DataTypes.STRING, allowNull: false })
     declare user_id: string;
