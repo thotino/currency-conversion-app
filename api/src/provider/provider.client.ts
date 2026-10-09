@@ -19,7 +19,8 @@ export class ProviderClient {
     }
 
     async getCurrentRates() {
-        const response = await fetch(`${this.baseUrl}/v1/rates`);
+        const timeout = AbortSignal.timeout(500);
+        const response = await fetch(`${this.baseUrl}/v1/rates`, { signal: timeout });
         if (!response.ok) {
             throw new Error("ERR_FAILED_FETCHING_RATES");
         }
@@ -32,6 +33,7 @@ export class ProviderClient {
         sourceCurrency: Currency,
         targetCurrency: Currency,
     ) {
+        const timeout = AbortSignal.timeout(1000);
         const response = await fetch(`${this.baseUrl}/v1/conversions`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -41,6 +43,7 @@ export class ProviderClient {
                 targetCurrency,
                 externalReference: reference,
             }),
+            signal: timeout
         });
         if (!response.ok) {
             throw new Error("ERR_FAILED_CREATING_CONVERSION");
