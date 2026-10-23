@@ -21,7 +21,7 @@ async function bootstrap(): Promise<void> {
 
     const config = app.get(AppConfigService);
     await app.listen(config.port, "0.0.0.0");
-    await Promise.all([webhooksWorker.run(), conversionsWorker.run()]);
+    // await Promise.all([webhooksWorker.run(), conversionsWorker.run()]);
 }
 
 void bootstrap();
