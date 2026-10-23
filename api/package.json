@@ -1,8 +1,8 @@
 {
-  "name": "keewe-api",
+  "name": "currency-conversion-api",
   "version": "0.0.1",
   "private": true,
-  "description": "Candidate API skeleton (NestJS + PostgreSQL).",
+  "description": "",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

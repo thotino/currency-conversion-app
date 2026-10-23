@@ -127,12 +127,10 @@ export class ConversionsRepository {
         const transaction = await this.sequelize.transaction();
 
         try {
-            const conversion = await this.conversionModel.findByPk(
-                idempotencyKey,
-                {
-                    transaction,
-                },
-            );
+            const conversion = await this.conversionModel.findOne({
+                where: { idempotency_key: idempotencyKey },
+                transaction,
+            });
 
             if (conversion == null) {
                 return null;
@@ -154,12 +152,10 @@ export class ConversionsRepository {
         const transaction = await this.sequelize.transaction();
 
         try {
-            const conversion = await this.conversionModel.findByPk(
-                idempotencyKey,
-                {
-                    transaction,
-                },
-            );
+            const conversion = await this.conversionModel.findOne({
+                where: { idempotency_key: idempotencyKey },
+                transaction,
+            });
 
             if (conversion == null) {
                 return null;
@@ -192,13 +188,40 @@ export class ConversionsRepository {
         return ConversionsRepository.format(retrievedInstance);
     }
     async *findCreated() {
-        const conversions = await this.conversionModel.findAll({
-            where: { status: ConversionStatus.CREATED },
-            include: [{ model: QuoteModel, as: "quote" }],
-        });
-        if (conversions.length === 0) return null;
-        for (const conversion of conversions) {
-            yield ConversionsRepository.format(conversion);
+        const transaction = await this.sequelize.transaction();
+        try {
+            const conversions = await this.conversionModel.findAll({
+                where: { status: ConversionStatus.CREATED },
+                limit: 10,
+                include: [{ model: QuoteModel, as: "quote" }],
+                lock: {level: transaction.LOCK.UPDATE, of: this.conversionModel},
+                skipLocked: true,
+                transaction,
+            });
+            if (conversions.length === 0) {
+                await transaction.commit();
+                return null;
+            }
+            const conversionIds = conversions.map(conversion => conversion.id);
+            const [_, submittingConversions] =
+                await this.conversionModel.update(
+                    { status: ConversionStatus.SUBMITTING },
+                    {
+                        where: {
+                            id: conversionIds,
+                            status: ConversionStatus.CREATED,
+                        },
+                        returning: [],
+                        transaction,                        
+                    },
+                );
+            await transaction.commit();
+            for (const conversion of conversions) {
+                yield ConversionsRepository.format(conversion);
+            }
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
         }
     }
 }

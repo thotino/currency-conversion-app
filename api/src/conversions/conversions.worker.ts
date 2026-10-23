@@ -8,6 +8,9 @@ export class ConversionsWorker {
     async run() {
         this.timer = setInterval(async () => {
             for await (const conversion of this.conversionsService.findCreated()) {
+                // TODO: Mark conversion as SUBMITTING
+                // TODO: Submit to provider
+                // TODO: Mark as SUBMITTED, UNKNOWN, REJECTED
                 await this.conversionsService.createConversionToProvider(
                     conversion!.id,
                     conversion!.quote,
