@@ -17,7 +17,7 @@ describe("Conversions", () => {
     };
     // @ts-expect-error
     const conversionsRepository: jest.Mocked<ConversionsRepository> = {
-        createConversionReservation: jest.fn(),
+        createConversion: jest.fn(),
     };
     const conversionsService = new ConversionsService(
         providerClient,
@@ -60,7 +60,7 @@ describe("Conversions", () => {
         );
         const conversion = new Conversion(userId, idempotencyKey, expiredQuote, ConversionStatus.CREATED)
         test("should throw an error if quote is not found", async () => {
-            conversionsRepository.createConversionReservation.mockResolvedValueOnce(
+            conversionsRepository.createConversion.mockResolvedValueOnce(
                 { quote: null, created: false, conversion: null },
             );
             await expect(
@@ -68,7 +68,7 @@ describe("Conversions", () => {
             ).rejects.toThrow(QuoteNotFoundError);
         });
         test("should throw an error if the retrieved quote is expired", async () => {
-            conversionsRepository.createConversionReservation.mockResolvedValueOnce(
+            conversionsRepository.createConversion.mockResolvedValueOnce(
                 { quote: expiredQuote, created: false, conversion: null },
             );
             await expect(
@@ -90,7 +90,7 @@ describe("Conversions", () => {
         //     ).rejects.toThrow(AlreadyConsumedQuoteError);
         // });
         test("should return the existing conversion", async () => {
-            conversionsRepository.createConversionReservation.mockResolvedValueOnce(
+            conversionsRepository.createConversion.mockResolvedValueOnce(
                 {
                     quote: validQuote,
                     created: false,

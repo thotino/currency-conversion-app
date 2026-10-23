@@ -32,13 +32,13 @@ export class ConversionsRepository {
         if (instance == null) return null;
         const quote = ConversionsRepository.formatQuote(instance.quote)!;
         return new Conversion(
-            instance.user_id,
-            instance.id,
+            instance.dataValues.user_id,
+            instance.dataValues.idempotency_key,
             quote,
-            instance.status as ConversionStatus,
+            instance.dataValues.status as ConversionStatus,
         );
     }
-    async createConversionReservation(
+    async createConversion(
         quoteId: string,
         idempotencyKey: string,
         userId: string,
@@ -49,7 +49,6 @@ export class ConversionsRepository {
                 transaction,
                 lock: transaction.LOCK.UPDATE,
             });
-
             if (quote == null) {
                 await transaction.commit();
                 return {
@@ -58,10 +57,42 @@ export class ConversionsRepository {
                     created: false,
                 };
             }
+            const existingConversion = await this.conversionModel.findOne({
+                where: {
+                    idempotency_key: idempotencyKey,
+                    quote_id: quoteId,
+                    user_id: userId,
+                },
+                transaction,
+            });
+            if (existingConversion != null) {
+                await transaction.commit();
+                return {
+                    quote: ConversionsRepository.formatQuote(quote),
+                    conversion: ConversionsRepository.format({
+                        ...existingConversion,
+                        quote,
+                    } as ConversionModel),
+                    created: false,
+                };
+            }
+
+            if (quote.consumed == true || quote.expires_at < new Date()) {
+                await transaction.commit();
+                return {
+                    quote: ConversionsRepository.formatQuote(quote),
+                    conversion: null,
+                    created: false,
+                };
+            }
             const [conversion, created] =
                 await this.conversionModel.findOrCreate({
                     transaction,
-                    where: { idempotency_key: idempotencyKey },
+                    where: {
+                        idempotency_key: idempotencyKey,
+                        user_id: userId,
+                        quote_id: quoteId,
+                    },
                     defaults: {
                         id: crypto.randomUUID(),
                         idempotency_key: idempotencyKey,
@@ -77,8 +108,11 @@ export class ConversionsRepository {
             await transaction.commit();
             return {
                 quote: ConversionsRepository.formatQuote(quote),
-                conversion: ConversionsRepository.format({...conversion, quote} as ConversionModel), 
-                created
+                conversion: ConversionsRepository.format({
+                    ...conversion,
+                    quote,
+                } as ConversionModel),
+                created,
             };
         } catch (error) {
             await transaction.rollback();
@@ -151,10 +185,10 @@ export class ConversionsRepository {
         return retrievedInstances.map(ConversionsRepository.format);
     }
     async findByKey(idempotencyKey: string) {
-        const retrievedInstance = await this.conversionModel.findByPk(
-            idempotencyKey,
-            { include: [{ model: QuoteModel, as: "quote" }] },
-        );
+        const retrievedInstance = await this.conversionModel.findOne({
+            where: { idempotency_key: idempotencyKey },
+            include: [{ model: QuoteModel, as: "quote" }],
+        });
         return ConversionsRepository.format(retrievedInstance);
     }
     async *findCreated() {

@@ -4,6 +4,8 @@ import { ProviderClient } from "src/provider/provider.client";
 import { ConversionsRepository } from "./conversions.repository";
 import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import { QuoteNotFoundError } from "src/errors/QuoteNotFoundError";
+import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolationError";
+import { AlreadyConsumedQuoteError } from "src/errors/AlreadyConsumedQuoteError";
 
 @Injectable()
 export class ConversionsService {
@@ -12,22 +14,39 @@ export class ConversionsService {
         readonly conversionRepository: ConversionsRepository,
     ) {}
     async create(userId: string, quoteId: string, idempotencyKey: string) {
-        const {
-            quote,
-            conversion, created
-        } = await this.conversionRepository.createConversionReservation(
-            quoteId,
-            idempotencyKey,
-            userId,
-        );
+        const existingConversion =
+            await this.conversionRepository.findByKey(idempotencyKey);
+        if (existingConversion != null) {
+            if (
+                existingConversion.userId !== userId ||
+                existingConversion.quote.id !== quoteId
+            ) {
+                throw new IdempotencyKeyViolationError(idempotencyKey);
+            }
+            return existingConversion;
+        }
+
+        const { quote, conversion, created } =
+            await this.conversionRepository.createConversion(
+                quoteId,
+                idempotencyKey,
+                userId,
+            );
         if (quote == null) {
             throw new QuoteNotFoundError(quoteId);
         }
-        if (quote.isExpired()) {
-            throw new ExpiredQuoteError(quote.expiration.toISOString());
+        if (conversion == null) {
+            if (quote.isExpired()) {
+                throw new ExpiredQuoteError(quote.expiration.toISOString());
+            }
+            if (quote.isConsumed()) {
+                throw new AlreadyConsumedQuoteError(quote.id);
+            }
+        }
+        if (conversion?.userId !== userId || conversion?.quote.id !== quoteId) {
+            throw new IdempotencyKeyViolationError(idempotencyKey);
         }
         return conversion;
-        //TODO: check if balance is ok for this conversion.
     }
     async createConversionToProvider(idempotencyKey: string, quote: Quote) {
         try {
