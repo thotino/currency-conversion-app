@@ -8,6 +8,7 @@ import { ConversionStatus, Currency } from "src/constants";
 import { AlreadyConsumedQuoteError } from "src/errors/AlreadyConsumedQuoteError";
 import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import Conversion from "src/entities/Conversion";
+import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolationError";
 
 describe("Conversions", () => {
     // @ts-expect-error
@@ -18,6 +19,7 @@ describe("Conversions", () => {
     // @ts-expect-error
     const conversionsRepository: jest.Mocked<ConversionsRepository> = {
         createConversion: jest.fn(),
+        findByKey: jest.fn(),
     };
     const conversionsService = new ConversionsService(
         providerClient,
@@ -29,11 +31,12 @@ describe("Conversions", () => {
     describe("create a new conversion", () => {
         const now = new Date("2026-01-01T23:30");
         beforeAll(() => {
-            jest.useFakeTimers({now})
-        })
+            jest.clearAllMocks();
+            jest.useFakeTimers({ now });
+        });
         afterAll(() => {
-            jest.useRealTimers()
-        })
+            jest.useRealTimers();
+        });
         const expiredQuote = new Quote(
             "UUID",
             Money.from(1, Currency.EUR),
@@ -48,29 +51,40 @@ describe("Conversions", () => {
             Money.from(1, Currency.GBP),
             1,
             Money.from(1, Currency.EUR),
-            now, true
+            now,
+            true,
         );
         const validQuote = new Quote(
-            "UUID",
+            quoteId,
             Money.from(1, Currency.EUR),
             Money.from(1, Currency.GBP),
             1,
             Money.from(1, Currency.EUR),
-            now, true
+            now,
+            true,
         );
-        const conversion = new Conversion(userId, idempotencyKey, expiredQuote, ConversionStatus.CREATED)
+        const conversion = new Conversion(
+            userId,
+            idempotencyKey,
+            validQuote,
+            ConversionStatus.CREATED,
+        );
         test("should throw an error if quote is not found", async () => {
-            conversionsRepository.createConversion.mockResolvedValueOnce(
-                { quote: null, created: false, conversion: null },
-            );
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: null,
+                created: false,
+                conversion: null,
+            });
             await expect(
                 conversionsService.create(userId, quoteId, idempotencyKey),
             ).rejects.toThrow(QuoteNotFoundError);
         });
         test("should throw an error if the retrieved quote is expired", async () => {
-            conversionsRepository.createConversion.mockResolvedValueOnce(
-                { quote: expiredQuote, created: false, conversion: null },
-            );
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: expiredQuote,
+                created: false,
+                conversion: null,
+            });
             await expect(
                 conversionsService.create(userId, quoteId, idempotencyKey),
             ).rejects.toThrow(ExpiredQuoteError);
@@ -90,16 +104,108 @@ describe("Conversions", () => {
         //     ).rejects.toThrow(AlreadyConsumedQuoteError);
         // });
         test("should return the existing conversion", async () => {
-            conversionsRepository.createConversion.mockResolvedValueOnce(
-                {
-                    quote: validQuote,
-                    created: false,
-                    conversion,
-                },
-            );
+            conversionsRepository.findByKey.mockResolvedValueOnce(conversion);
             await expect(
                 conversionsService.create(userId, quoteId, idempotencyKey),
             ).resolves.toEqual(conversion);
+            expect(
+                conversionsRepository.createConversion,
+            ).not.toHaveBeenCalled();
+        });
+        test("should raise an idempotency key violation error if key exists for an other user", async () => {
+            const existingConversion = new Conversion(
+                "UUID",
+                idempotencyKey,
+                validQuote,
+                ConversionStatus.CREATED,
+            );
+            conversionsRepository.findByKey.mockResolvedValueOnce(
+                existingConversion,
+            );
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).rejects.toThrow(IdempotencyKeyViolationError);
+            expect(
+                conversionsRepository.createConversion,
+            ).not.toHaveBeenCalled();
+        });
+        test("should raise an idempotency key violation error if key exists for an other quote", async () => {
+            const existingConversion = new Conversion(
+                userId,
+                idempotencyKey,
+                expiredQuote,
+                ConversionStatus.CREATED,
+            );
+            conversionsRepository.findByKey.mockResolvedValueOnce(
+                existingConversion,
+            );
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).rejects.toThrow(IdempotencyKeyViolationError);
+            expect(
+                conversionsRepository.createConversion,
+            ).not.toHaveBeenCalled();
+        });
+        test("should throw an error if quote is not found", async () => {
+            conversionsRepository.findByKey.mockResolvedValueOnce(null);
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: null,
+                conversion: null,
+                created: false,
+            });
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).rejects.toThrow(QuoteNotFoundError);
+        });
+        test("should throw an error if quote is expired", async () => {
+            conversionsRepository.findByKey.mockResolvedValueOnce(null);
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: expiredQuote,
+                conversion: null,
+                created: false,
+            });
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).rejects.toThrow(ExpiredQuoteError);
+        });
+        test("should throw an error if quote is already consumed", async () => {
+            conversionsRepository.findByKey.mockResolvedValueOnce(null);
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: consumedQuote,
+                conversion: null,
+                created: false,
+            });
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).rejects.toThrow(AlreadyConsumedQuoteError);
+        });
+        test("should return the created conversion", async () => {
+            conversionsRepository.findByKey.mockResolvedValueOnce(null);
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: validQuote,
+                conversion: conversion,
+                created: true,
+            });
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).resolves.toEqual(conversion);
+        });
+        test("should throw an error if quote is valid but conversion is for another user", async () => {
+            const existingConversion = new Conversion(
+                "UUID",
+                idempotencyKey,
+                validQuote,
+                ConversionStatus.CREATED,
+            );
+            conversionsRepository.findByKey.mockResolvedValueOnce(null);
+            conversionsRepository.createConversion.mockResolvedValueOnce({
+                quote: validQuote,
+                conversion: existingConversion,
+                created: true,
+            });
+            await expect(
+                conversionsService.create(userId, quoteId, idempotencyKey),
+            ).rejects.toThrow(IdempotencyKeyViolationError);
         });
     });
     describe("create conversion to provider", () => {});
