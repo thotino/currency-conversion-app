@@ -1,5 +1,5 @@
 {
-  "name": "keewe-fake-provider",
+  "name": "fake-rate-provider-and-trail",
   "version": "0.0.1",
   "private": true,
   "description": "Standalone fake banking partner (HTTP service).",
