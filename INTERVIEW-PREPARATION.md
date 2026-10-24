@@ -30,7 +30,7 @@ Concernant l'ordre de conversion
 | Etat source | Evènement | Etat cible |
 | --- | --- | --- |
 | CREATED | prise en charge worker soumission à la banque | SUBMITTING |
-| SUBIMITTING | rejet immédiat de la soumission | REJECTED |
+| SUBMITTING | rejet immédiat de la soumission | REJECTED |
 | SUBMITTING | crash du worker | SUBMITTING |
 | SUBMITTING | succès de la soumission | SUBMITTED |
 | SUBMITTING | T/O ou erreur indéterminé | UNKNOWN |
