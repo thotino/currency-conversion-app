@@ -1,4 +1,4 @@
-# Keewe — Cas pratique
+# Currency conversion — Cas pratique
 
 Squelette de départ. Le sujet du cas est fourni séparément par mail.
 
@@ -30,7 +30,7 @@ prise en compte sans redémarrage.
 Vérification rapide : `curl http://localhost:3000/health`.
 
 La base PostgreSQL est exposée sur `localhost:5432`
-(`postgres://keewe:keewe@localhost:5432/keewe`).
+(`postgres://fintech:fintech@localhost:5432/conversions`).
 
 ## Tests
 
