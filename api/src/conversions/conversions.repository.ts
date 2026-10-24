@@ -217,7 +217,7 @@ export class ConversionsRepository {
                 transaction,
             });
             await this.conversionModel.update(
-                { status: ConversionStatus.REJECTED },
+                { status: ConversionStatus.SUBMITTED },
                 {
                     where: {
                         id: { [Op.in]: conversionIds },
@@ -259,6 +259,7 @@ export class ConversionsRepository {
                     of: this.conversionModel,
                 },
                 skipLocked: true,
+                attributes: ["id", "idempotency_key", "quote"], // Complete attributes, ommit statuses
                 transaction,
             });
             if (conversions.length === 0) {
