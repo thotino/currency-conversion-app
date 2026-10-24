@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { ScheduleModule } from "@nestjs/schedule";
 import { AppConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
 import { ProviderModule } from "./provider/provider.module";
@@ -33,6 +34,7 @@ const config: AppConfigService = new AppConfigService();
         }),
         WebhooksModule,
         BalancesModule,
+        ScheduleModule.forRoot(),
     ],
     controllers: [
         HealthController,

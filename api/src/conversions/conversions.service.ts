@@ -62,7 +62,7 @@ export class ConversionsService {
                 providerRef,
             );
         } catch (error) {
-            await this.conversionRepository.markFailed(idempotencyKey);
+            await this.conversionRepository.markAsUnknown(idempotencyKey);
             throw error;
         }
     }
