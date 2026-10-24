@@ -45,7 +45,7 @@ export function App(): JSX.Element {
 
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
-      <h1>Keewe — Currency Conversion</h1>
+      <h1>Fintech - Currency Conversion App</h1>
       <p>
         API health: <code>{health}</code>
       </p>
