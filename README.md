@@ -79,7 +79,7 @@ Versions principales declarees dans les `package.json` : NestJS `10.4.x`, TypeSc
 L'API exige `DATABASE_URL` et `PROVIDER_BASE_URL` :
 
 ```bash
-export DATABASE_URL='postgres://keewe:keewe@localhost:5432/keewe?sslmode=disable'
+export DATABASE_URL='postgres://fintech:fintech@localhost:5432/conversions?sslmode=disable'
 export PROVIDER_BASE_URL='http://localhost:4000'
 export PORT=3000
 ```
