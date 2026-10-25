@@ -27,10 +27,11 @@ describe("Balances", () => {
         );
         conversionsService.findAll.mockResolvedValueOnce([
             new Conversion(
+                "ID",
                 USER_ID,
                 "MY_KEY",
-                quote,
                 ConversionStatus.COMPLETED,
+                quote,
             ),
         ]);
         const computedBalance =

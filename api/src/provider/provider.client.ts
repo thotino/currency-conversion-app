@@ -27,7 +27,7 @@ export class ProviderClient {
         return response.json();
     }
 
-    async createConversion(
+    async submitConversion(
         reference: string,
         amount: number,
         sourceCurrency: Currency,
@@ -36,7 +36,10 @@ export class ProviderClient {
         const timeout = AbortSignal.timeout(1000);
         const response = await fetch(`${this.baseUrl}/v1/conversions`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "X-Test-Scenario": "reject" // "happy_path" / "reject" / "out_of_order"
+            },
             body: JSON.stringify({
                 amount,
                 sourceCurrency,
@@ -45,9 +48,9 @@ export class ProviderClient {
             }),
             signal: timeout
         });
-        if (!response.ok) {
-            throw new Error("ERR_FAILED_CREATING_CONVERSION");
+        return {
+            status: response.status,
+            message: await response.json(),
         }
-        return response.json();
     }
 }
