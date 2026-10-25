@@ -7,6 +7,7 @@ import { ConversionStatus } from "src/constants";
 import { Sequelize } from "sequelize-typescript";
 import { Quote as QuoteModel } from "src/quotes/models/quotes.model";
 import { Op } from "sequelize";
+import { SubmissionResult } from "src/types";
 
 @Injectable()
 export class ConversionsRepository {
@@ -33,10 +34,11 @@ export class ConversionsRepository {
         if (instance == null) return null;
         const quote = ConversionsRepository.formatQuote(instance.quote)!;
         return new Conversion(
+            instance.dataValues.id,
             instance.dataValues.user_id,
             instance.dataValues.idempotency_key,
-            quote,
             instance.dataValues.status as ConversionStatus,
+            quote,
         );
     }
     async createConversion(
@@ -149,8 +151,10 @@ export class ConversionsRepository {
             throw error;
         }
     }
-    async markAsUnknown(conversionIds: string[]) {
+    async markAsUnknown(conversions: { id: string }[]) {
         const transaction = await this.sequelize.transaction();
+        const conversionIds = conversions.map(conversion => conversion.id);
+
         try {
             await this.conversionModel.findAll({
                 where: {
@@ -177,8 +181,10 @@ export class ConversionsRepository {
             throw error;
         }
     }
-    async markAsRejected(conversionIds: string[]) {
+    async markAsRejected(conversions: { id: string }[]) {
         const transaction = await this.sequelize.transaction();
+        const conversionIds = conversions.map(conversion => conversion.id);
+
         try {
             await this.conversionModel.findAll({
                 where: {
@@ -205,28 +211,43 @@ export class ConversionsRepository {
             throw error;
         }
     }
-    async markAsSubmitted(conversionIds: string[]) {
+    async updateAfterSubmissionAttempt(conversions: SubmissionResult[]) {
         const transaction = await this.sequelize.transaction();
+        const conversionIds = conversions.map(conversion => conversion.id);
         try {
-            await this.conversionModel.findAll({
+            const conversionInstances = await this.conversionModel.findAll({
                 where: {
                     id: { [Op.in]: conversionIds },
-                    status: ConversionStatus.SUBMITTING,
+                    status: { [Op.in]: [ConversionStatus.SUBMITTING] },
                 },
                 lock: transaction.LOCK.UPDATE,
                 transaction,
             });
-            await this.conversionModel.update(
-                { status: ConversionStatus.SUBMITTED },
-                {
-                    where: {
-                        id: { [Op.in]: conversionIds },
-                        status: { [Op.in]: [ConversionStatus.SUBMITTING] },
-                    },
-                    returning: ["id"],
-                    transaction,
-                },
-            );
+            const conversionsUpdates = conversionInstances.map(instance => {
+                const curConversion = conversions.find(
+                    conversion => conversion.id == instance.id,
+                );
+                if (curConversion != null) {
+                    if (curConversion.kind === ConversionStatus.SUBMITTED) {
+                        return {
+                            ...instance.toJSON(),
+                            status: curConversion.kind,
+                            provider_ref: curConversion.providerRef,
+                        };
+                    }
+                    return {
+                        ...instance.toJSON(),
+                        status: curConversion.kind,
+                    };
+                }
+                return {
+                    ...instance.toJSON(),
+                };
+            });
+            await this.conversionModel.bulkCreate(conversionsUpdates, {
+                updateOnDuplicate: ["status", "provider_ref", "updated_at"],
+                transaction,
+            });
             await transaction.commit();
         } catch (error) {
             await transaction.rollback();
@@ -247,7 +268,7 @@ export class ConversionsRepository {
         });
         return ConversionsRepository.format(retrievedInstance);
     }
-    async *findCreated() {
+    async findCreated() {
         const transaction = await this.sequelize.transaction();
         try {
             const conversions = await this.conversionModel.findAll({
@@ -259,7 +280,7 @@ export class ConversionsRepository {
                     of: this.conversionModel,
                 },
                 skipLocked: true,
-                attributes: ["id", "idempotency_key", "quote"], // Complete attributes, ommit statuses
+                attributes: ["id", "idempotency_key", "user_id"], // Complete attributes, ommit statuses
                 transaction,
             });
             if (conversions.length === 0) {
@@ -280,9 +301,10 @@ export class ConversionsRepository {
                     },
                 );
             await transaction.commit();
-            for (const conversion of conversions) {
-                yield ConversionsRepository.format(conversion);
-            }
+            return conversions.map(ConversionsRepository.format);
+            // for (const conversion of conversions) {
+            //     yield ConversionsRepository.format(conversion);
+            // }
         } catch (error) {
             await transaction.rollback();
             throw error;

@@ -6,6 +6,8 @@ import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import { QuoteNotFoundError } from "src/errors/QuoteNotFoundError";
 import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolationError";
 import { AlreadyConsumedQuoteError } from "src/errors/AlreadyConsumedQuoteError";
+import { ConversionStatus } from "src/constants";
+import { SubmissionResult } from "src/types";
 
 @Injectable()
 export class ConversionsService {
@@ -48,28 +50,80 @@ export class ConversionsService {
         }
         return conversion;
     }
-    async createConversionToProvider(idempotencyKey: string, quote: Quote) {
+    async submitToProvider(
+        identifier: string,
+        quote: Quote,
+    ): Promise<SubmissionResult> {
         try {
-            const { providerRef } = await this.providerClient.createConversion(
-                idempotencyKey,
+            const submissionResult = await this.providerClient.submitConversion(
+                identifier,
                 quote.source.amount,
                 quote.source.currency,
                 quote.target.currency,
             );
-
-            return await this.conversionRepository.updateWithProviderRefAndStatus(
-                idempotencyKey,
-                providerRef,
-            );
+            if (submissionResult.status === 202) {
+                if (
+                    submissionResult.message.providerRef != null &&
+                    typeof submissionResult.message.providerRef === "string" &&
+                    submissionResult.message.providerRef.length != 0
+                ) {
+                    return {
+                        kind: ConversionStatus.SUBMITTED,
+                        id: identifier,
+                        providerRef: submissionResult.message.providerRef,
+                    };
+                }
+                return {
+                    kind: ConversionStatus.UNKNOWN,
+                    id: identifier,
+                    reason: submissionResult.message,
+                };
+            }
+            if (
+                submissionResult.status === 400 &&
+                submissionResult.message != null
+            ) {
+                return {
+                    kind: ConversionStatus.REJECTED,
+                    id: identifier,
+                    reason: submissionResult.message,
+                };
+            }
+            if (
+                submissionResult.status > 400 &&
+                submissionResult.status < 500 &&
+                submissionResult.message != null
+            ) {
+                return {
+                    kind: ConversionStatus.UNKNOWN,
+                    id: identifier,
+                    reason: submissionResult.message,
+                };
+            }
+            return {
+                kind: ConversionStatus.UNKNOWN,
+                id: identifier,
+                reason: submissionResult.message,
+            };
         } catch (error) {
-            await this.conversionRepository.markAsUnknown(idempotencyKey);
-            throw error;
+            let message = "ERR_UNEXPECTED_ERROR";
+            if (error instanceof Error) {
+                message = error.message;
+            }
+            return {
+                kind: ConversionStatus.UNKNOWN,
+                id: identifier,
+                reason: message,
+            };
         }
     }
-    async *findCreated() {
-        for await (const conversion of this.conversionRepository.findCreated()) {
-            yield conversion;
-        }
+    async updateAfterSubmission(submissionAttemptOutcomes: SubmissionResult[]) {
+        await this.conversionRepository.updateAfterSubmissionAttempt(
+            submissionAttemptOutcomes,
+        );
+    }
+    async findCreated() {
+        return await this.conversionRepository.findCreated();
     }
     async findAll(userId: string) {
         return await this.conversionRepository.findAll(userId);

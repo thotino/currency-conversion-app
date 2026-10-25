@@ -14,7 +14,7 @@ describe("Conversions", () => {
     // @ts-expect-error
     const providerClient: jest.Mocked<ProviderClient> = {
         baseUrl: "http://provider/",
-        createConversion: jest.fn(),
+        submitConversion: jest.fn(),
     };
     // @ts-expect-error
     const conversionsRepository: jest.Mocked<ConversionsRepository> = {
@@ -64,10 +64,11 @@ describe("Conversions", () => {
             true,
         );
         const conversion = new Conversion(
+            "id",
             userId,
             idempotencyKey,
-            validQuote,
             ConversionStatus.CREATED,
+            validQuote,
         );
         test("should throw an error if quote is not found", async () => {
             conversionsRepository.createConversion.mockResolvedValueOnce({
@@ -114,10 +115,11 @@ describe("Conversions", () => {
         });
         test("should raise an idempotency key violation error if key exists for an other user", async () => {
             const existingConversion = new Conversion(
+                "ID",
                 "UUID",
                 idempotencyKey,
-                validQuote,
                 ConversionStatus.CREATED,
+                validQuote,
             );
             conversionsRepository.findByKey.mockResolvedValueOnce(
                 existingConversion,
@@ -131,10 +133,11 @@ describe("Conversions", () => {
         });
         test("should raise an idempotency key violation error if key exists for an other quote", async () => {
             const existingConversion = new Conversion(
+                "id",
                 userId,
                 idempotencyKey,
-                expiredQuote,
                 ConversionStatus.CREATED,
+                expiredQuote,
             );
             conversionsRepository.findByKey.mockResolvedValueOnce(
                 existingConversion,
@@ -192,10 +195,11 @@ describe("Conversions", () => {
         });
         test("should throw an error if quote is valid but conversion is for another user", async () => {
             const existingConversion = new Conversion(
+                "ID",
                 "UUID",
                 idempotencyKey,
-                validQuote,
                 ConversionStatus.CREATED,
+                validQuote,
             );
             conversionsRepository.findByKey.mockResolvedValueOnce(null);
             conversionsRepository.createConversion.mockResolvedValueOnce({
