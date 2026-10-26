@@ -7,14 +7,8 @@ import { Sequelize } from "sequelize-typescript";
 import Conversion from "src/entities/Conversion";
 import { ConversionStatus, EventProcessingStatus } from "src/constants";
 import { literal, Op } from "sequelize";
-interface Event {
-    id: string;
-    eventId: string;
-    type: string;
-    providerRef: string;
-    occuredAt: Date;
-    payload: Record<string, string>;
-}
+import { WebhookEvent } from "src/types";
+
 const PROCESSING_BATCH_SIZE = 100;
 @Injectable()
 export class WebhooksRepository {
@@ -32,7 +26,7 @@ export class WebhooksRepository {
             providerRef: instance.provider_ref,
             occuredAt: instance.event_occurred_at,
             payload: instance.event_payload,
-        } as Event;
+        };
     }
     async save(event: WebhooksProviderDto) {
         await this.eventModel.create(
@@ -97,7 +91,7 @@ export class WebhooksRepository {
             throw error;
         }
     }
-    async updateConversions(processingEvents: Event[]) {
+    async updateConversions(processingEvents: WebhookEvent[]) {
         const transaction = await this.sequelize.transaction();
         try {
             const conversionUpdates = [];
@@ -124,7 +118,13 @@ export class WebhooksRepository {
                 ),
                 lock: transaction.LOCK.UPDATE,
             });
-        } catch (error) {}
+            if (conversions.length == 0) {
+                throw new Error("ERR_CONVERSIONS_RETRIEVAL_FAILED");
+            }
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
     async updateConversionAsAccepted(event: Event, conversion: Conversion) {
         const transaction = await this.sequelize.transaction();
