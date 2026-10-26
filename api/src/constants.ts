@@ -17,6 +17,10 @@ export enum ConversionStatus {
 }
 export enum EventProcessingStatus {
     PENDING = "PENDING",
+    PROCESSING = "PROCESSING",
     COMPLETED = "COMPLETED",
+    FAILED = "FAILED",
+    IGNORED = "IGNORED",
+    FAILED_NEED_MANUAL_REVIEW = "FAILED_NEED_MANUAL_REVIEW"
 }
 export const USER_ID = "00000000-0000-0000-0000-000000000001";

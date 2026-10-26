@@ -12,4 +12,8 @@ export class WebhooksService {
     async handleEvent(event: WebhooksProviderDto) {
         await this.webhooksRepository.save(event);
     }
+    async findPendingEventsToBeProcessed() {
+        const events = await this.webhooksRepository.findAllPendingEvents();
+        return Array.isArray(events) ? events : null;
+    }
 }

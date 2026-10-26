@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { WebhooksRepository } from "./webhooks.repository";
 import { ConversionsService } from "src/conversions/conversions.service";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { WebhooksService } from "./webhooks.service";
 enum webhookEventDataStatus {
     ACCEPTED = "accepted",
     EXECUTED = "executed",
@@ -8,49 +10,42 @@ enum webhookEventDataStatus {
 }
 @Injectable()
 export class WebhooksWorker {
-    timer: NodeJS.Timeout | null = null;
     constructor(
-        private readonly webhooksRepository: WebhooksRepository,
+        private readonly webhooksService: WebhooksService,
         private readonly conversionsService: ConversionsService,
     ) {}
+    @Cron(CronExpression.EVERY_MINUTE, { waitForCompletion: true })
     async run() {
-        this.timer = setInterval(async () => {
-            // Find all pending events
-            for await (const pendingEvent of this.webhooksRepository.findAllPendingEvents()) {
-                const conversion = await this.conversionsService.findOneByKey(
-                    pendingEvent.payload.externalRef,
-                );
-                if (conversion != null) {
-                    switch (pendingEvent.payload.status) {
-                        case "accepted":
-                            await this.webhooksRepository.updateConversionAsAccepted(
-                                pendingEvent,
-                                conversion,
-                            );
-                            break;
-                        case "executed":
-                            await this.webhooksRepository.updateConversionAsCompleted(
-                                pendingEvent,
-                                conversion,
-                            );
-                            break;
-                        case "rejected":
-                            await this.webhooksRepository.updateConversionAsRejected(
-                                pendingEvent,
-                                conversion,
-                            );
-                            break;
-                    }
+        // Find all pending events
+        for await (const pendingEvent of this.webhooksService.findAllPendingEvents()) {
+            const conversion = await this.conversionsService.findOneByKey(
+                pendingEvent.payload.externalRef,
+            );
+            if (conversion != null) {
+                switch (pendingEvent.payload.status) {
+                    case "accepted":
+                        await this.webhooksService.updateConversionAsAccepted(
+                            pendingEvent,
+                            conversion,
+                        );
+                        break;
+                    case "executed":
+                        await this.webhooksService.updateConversionAsCompleted(
+                            pendingEvent,
+                            conversion,
+                        );
+                        break;
+                    case "rejected":
+                        await this.webhooksService.updateConversionAsRejected(
+                            pendingEvent,
+                            conversion,
+                        );
+                        break;
                 }
             }
-            // For each event, find conversion
-            // if conversion exists, update conversion and event
-            // if conversion do not exists, do nothing
-        }, 1000 * 10);
-    }
-    async stop() {
-        if (this.timer != null) {
-            clearInterval(this.timer);
         }
+        // For each event, find conversion
+        // if conversion exists, update conversion and event
+        // if conversion do not exists, do nothing
     }
 }
