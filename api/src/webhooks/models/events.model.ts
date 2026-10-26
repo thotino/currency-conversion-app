@@ -6,6 +6,7 @@ import {
     Table,
     UpdatedAt,
 } from "sequelize-typescript";
+import { EventProcessingStatus } from "src/constants";
 
 @Table({
     timestamps: true,
@@ -13,23 +14,30 @@ import {
     tableName: "events",
 })
 export class Event extends Model {
-    @Column({ type: DataTypes.STRING, primaryKey: true, unique: true })
+    @Column({ type: DataTypes.UUID, primaryKey: true })
     declare id: string;
 
-    @Column({ type: DataTypes.STRING, primaryKey: true })
-    declare provider_ref: string;
-
-    @Column({ type: DataTypes.STRING, primaryKey: true })
-    declare external_ref: string;
+    @Column({ type: DataTypes.STRING, unique: true, allowNull: false })
+    declare event_id: string;
 
     @Column({ type: DataTypes.STRING, allowNull: false })
-    declare status: string;
+    declare event_type: string;
 
-    @Column({ type: DataTypes.STRING, allowNull: true })
-    declare occured_at: Date;
+    @Column({ type: DataTypes.STRING, allowNull: false })
+    declare provider_ref: string;
+
+    @Column({
+        type: DataTypes.ENUM,
+        allowNull: false,
+        values: Object.values(EventProcessingStatus),
+    })
+    declare event_processing_status: string;
+
+    @Column({ type: DataTypes.DATE, allowNull: false })
+    declare event_occurred_at: Date;
 
     @Column({ type: DataTypes.JSON, allowNull: false })
-    declare payload: Record<string, unknown>;
+    declare event_payload: Record<string, unknown>;
 
     @CreatedAt
     declare created_at: CreationOptional<Date>;

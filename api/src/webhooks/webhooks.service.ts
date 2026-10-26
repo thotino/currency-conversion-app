@@ -1,7 +1,5 @@
-import { ConversionsService } from "src/conversions/conversions.service";
 import { WebhooksProviderDto } from "./dtos/webhooks.provider.dto";
 import { Injectable } from "@nestjs/common";
-import { ConversionNotFoundError } from "src/errors/ConversionNotFoundError";
 import { WebhooksRepository } from "./webhooks.repository";
 enum ConversionsEventsTypes {
     EXECUTED = "conversion.executed",

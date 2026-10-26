@@ -5,18 +5,15 @@ import { WebhooksProviderDto } from "./dtos/webhooks.provider.dto";
 import { Conversion as ConversionModel } from "src/conversions/models/conversions.model";
 import { Sequelize } from "sequelize-typescript";
 import Conversion from "src/entities/Conversion";
-import { ConversionStatus } from "src/constants";
+import { ConversionStatus, EventProcessingStatus } from "src/constants";
 interface Event {
     id: string;
-    externalRef: string;
+    type: string;
     providerRef: string;
     occuredAt: Date;
     payload: Record<string, string>;
 }
-enum EventStatus {
-    PENDING = "PENDING",
-    COMPLETED = "COMPLETED",
-}
+
 @Injectable()
 export class WebhooksRepository {
     constructor(
@@ -27,22 +24,24 @@ export class WebhooksRepository {
     ) {}
     private static format(instance: EventModel) {
         return {
-            id: instance.id,
-            externalRef: instance.external_ref,
+            id: instance.event_id,
+            type: instance.event_type,
+            // externalRef: instance.external_ref,
             providerRef: instance.provider_ref,
-            occuredAt: instance.occured_at,
-            payload: instance.payload,
+            occuredAt: instance.event_occurred_at,
+            payload: instance.event_payload,
         } as Event;
     }
     async save(event: WebhooksProviderDto) {
         await this.eventModel.create(
             {
-                id: event.eventId,
+                id: crypto.randomUUID(),
+                event_id: event.eventId,
+                event_type: event.eventType,
                 provider_ref: event.providerRef,
-                external_ref: event.data.externalReference,
-                status: EventStatus.PENDING,
-                occured_at: event.occurredAt,
-                payload: event.data,
+                event_processing_status: EventProcessingStatus.PENDING,
+                event_occurred_at: event.occurredAt,
+                event_payload: event.data,
             },
             { ignoreDuplicates: true },
         );
@@ -51,9 +50,9 @@ export class WebhooksRepository {
     async *findAllPendingEvents() {
         const events = await this.eventModel.findAll({
             where: {
-                status: EventStatus.PENDING,
+                event_processing_status: EventProcessingStatus.PENDING,
             },
-            order: [["occured_at", "ASC"]],
+            order: [["event_occurred_at", "ASC"]],
         });
         if (events.length === 0) return null;
         for (const event of events) {
@@ -64,7 +63,7 @@ export class WebhooksRepository {
         const transaction = await this.sequelize.transaction();
         try {
             await this.eventModel.update(
-                { status: EventStatus.COMPLETED },
+                { status: EventProcessingStatus.COMPLETED },
                 { transaction, where: { id: event.id } },
             );
             await this.conversionModel.update(
@@ -81,7 +80,7 @@ export class WebhooksRepository {
         const transaction = await this.sequelize.transaction();
         try {
             await this.eventModel.update(
-                { status: EventStatus.COMPLETED },
+                { status: EventProcessingStatus.COMPLETED },
                 { transaction, where: { id: event.id } },
             );
             await this.conversionModel.update(
@@ -99,7 +98,7 @@ export class WebhooksRepository {
         const transaction = await this.sequelize.transaction();
         try {
             await this.eventModel.update(
-                { status: EventStatus.COMPLETED },
+                { status: EventProcessingStatus.COMPLETED },
                 { transaction, where: { id: event.id } },
             );
             await this.conversionModel.update(

@@ -18,7 +18,7 @@ export class WebhooksWorker {
             // Find all pending events
             for await (const pendingEvent of this.webhooksRepository.findAllPendingEvents()) {
                 const conversion = await this.conversionsService.findOneByKey(
-                    pendingEvent.externalRef,
+                    pendingEvent.payload.externalRef,
                 );
                 if (conversion != null) {
                     switch (pendingEvent.payload.status) {
