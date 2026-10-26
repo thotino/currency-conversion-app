@@ -1,6 +1,6 @@
 -- Up Migration
 CREATE TABLE IF NOT EXISTS conversions (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   idempotency_key TEXT NOT NULL UNIQUE,
   user_id TEXT NOT NULL,
   provider_ref TEXT NOT NULL,

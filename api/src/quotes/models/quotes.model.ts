@@ -16,7 +16,7 @@ import { MoneyInterface } from "src/types";
     tableName: "quotes",
 })
 export class Quote extends Model {
-    @Column({ primaryKey: true, type: DataTypes.STRING })
+    @Column({ primaryKey: true, type: DataTypes.UUID })
     declare id: string;
 
     @Column({ type: DataTypes.JSON, allowNull: false })

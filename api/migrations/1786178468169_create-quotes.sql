@@ -1,6 +1,6 @@
 -- Up Migration
 CREATE TABLE IF NOT EXISTS quotes (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source JSON NOT NULL,
   target JSON NOT NULL,
   fees JSON NOT NULL,

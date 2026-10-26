@@ -17,7 +17,7 @@ import { Quote } from "src/quotes/models/quotes.model";
     tableName: "conversions",
 })
 export class Conversion extends Model {
-    @Column({ type: DataTypes.STRING, primaryKey: true, allowNull: false })
+    @Column({ type: DataTypes.UUID, primaryKey: true, allowNull: false })
     declare id: string;
 
     @Column({ type: DataTypes.STRING, allowNull: false, unique: true })

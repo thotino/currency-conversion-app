@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConversionsService } from "./conversions.service";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { ConversionStatus } from "src/constants";
 
 @Injectable()
 export class ConversionsWorker {

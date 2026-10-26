@@ -8,7 +8,7 @@ import { Sequelize } from "sequelize-typescript";
 import { Quote as QuoteModel } from "src/quotes/models/quotes.model";
 import { Op } from "sequelize";
 import { SubmissionResult } from "src/types";
-
+const SUBMISSION_BATCH_SIZE = 10;
 @Injectable()
 export class ConversionsRepository {
     constructor(
@@ -122,95 +122,6 @@ export class ConversionsRepository {
             throw error;
         }
     }
-    async updateWithProviderRefAndStatus(
-        idempotencyKey: string,
-        providerRef: string,
-        status: ConversionStatus = ConversionStatus.SUBMITTED,
-    ) {
-        const transaction = await this.sequelize.transaction();
-
-        try {
-            const conversion = await this.conversionModel.findOne({
-                where: { idempotency_key: idempotencyKey },
-                transaction,
-            });
-
-            if (conversion == null) {
-                return null;
-            }
-
-            await conversion.update(
-                { provider_ref: providerRef, status },
-                { transaction },
-            );
-
-            await transaction.commit();
-            return this.findByKey(idempotencyKey);
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
-    async markAsUnknown(conversions: { id: string }[]) {
-        const transaction = await this.sequelize.transaction();
-        const conversionIds = conversions.map(conversion => conversion.id);
-
-        try {
-            await this.conversionModel.findAll({
-                where: {
-                    id: { [Op.in]: conversionIds },
-                    status: ConversionStatus.SUBMITTING,
-                },
-                lock: transaction.LOCK.UPDATE,
-                transaction,
-            });
-            await this.conversionModel.update(
-                { status: ConversionStatus.UNKNOWN },
-                {
-                    where: {
-                        id: { [Op.in]: conversionIds },
-                        status: { [Op.in]: [ConversionStatus.SUBMITTING] },
-                    },
-                    returning: ["id"],
-                    transaction,
-                },
-            );
-            await transaction.commit();
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
-    async markAsRejected(conversions: { id: string }[]) {
-        const transaction = await this.sequelize.transaction();
-        const conversionIds = conversions.map(conversion => conversion.id);
-
-        try {
-            await this.conversionModel.findAll({
-                where: {
-                    id: { [Op.in]: conversionIds },
-                    status: ConversionStatus.SUBMITTING,
-                },
-                lock: transaction.LOCK.UPDATE,
-                transaction,
-            });
-            await this.conversionModel.update(
-                { status: ConversionStatus.REJECTED },
-                {
-                    where: {
-                        id: { [Op.in]: conversionIds },
-                        status: { [Op.in]: [ConversionStatus.SUBMITTING] },
-                    },
-                    returning: ["id"],
-                    transaction,
-                },
-            );
-            await transaction.commit();
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
     async updateAfterSubmissionAttempt(conversions: SubmissionResult[]) {
         const transaction = await this.sequelize.transaction();
         const conversionIds = conversions.map(conversion => conversion.id);
@@ -273,14 +184,14 @@ export class ConversionsRepository {
         try {
             const conversions = await this.conversionModel.findAll({
                 where: { status: ConversionStatus.CREATED },
-                limit: 10,
+                limit: SUBMISSION_BATCH_SIZE,
                 include: [{ model: QuoteModel, as: "quote" }],
                 lock: {
                     level: transaction.LOCK.UPDATE,
                     of: this.conversionModel,
                 },
                 skipLocked: true,
-                attributes: ["id", "idempotency_key", "user_id"], // Complete attributes, ommit statuses
+                attributes: ["id", "idempotency_key", "user_id"],
                 transaction,
             });
             if (conversions.length === 0) {
@@ -288,7 +199,7 @@ export class ConversionsRepository {
                 return null;
             }
             const conversionIds = conversions.map(conversion => conversion.id);
-            const [_, submittingConversions] =
+            const [updatedInstanceLength, submittingConversions] =
                 await this.conversionModel.update(
                     { status: ConversionStatus.SUBMITTING },
                     {
@@ -300,11 +211,11 @@ export class ConversionsRepository {
                         transaction,
                     },
                 );
+            if (conversions.length !== updatedInstanceLength) {
+                throw new Error("ERR_UPDATE_LOCKED_INSTANCE");
+            }
             await transaction.commit();
             return conversions.map(ConversionsRepository.format);
-            // for (const conversion of conversions) {
-            //     yield ConversionsRepository.format(conversion);
-            // }
         } catch (error) {
             await transaction.rollback();
             throw error;
