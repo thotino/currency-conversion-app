@@ -192,6 +192,7 @@ export class ConversionsRepository {
                 },
                 skipLocked: true,
                 attributes: ["id", "idempotency_key", "user_id"],
+                order: [["created_at", "DESC"], ["id", "DESC"]],
                 transaction,
             });
             if (conversions.length === 0) {
