@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS conversions (
   idempotency_key TEXT NOT NULL UNIQUE,
   user_id TEXT NOT NULL,
   provider_ref TEXT NOT NULL,
-  quote_id TEXT NOT NULL UNIQUE,
+  quote_id UUID NOT NULL UNIQUE,
   status TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
