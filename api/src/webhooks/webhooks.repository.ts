@@ -177,7 +177,11 @@ export class WebhooksRepository {
                     ...event,
                     id: event.id,
                     event_id: event.eventId,
+                    event_type: event.type,
                     event_processing_status: event.status,
+                    provider_ref: event.providerRef,
+                    event_occurred_at: event.occuredAt,
+                    event_payload: event.payload,
                 };
                 if (event.eventId != eventMapping.get(key)?.eventId) {
                     eventUpdt.event_processing_status =
