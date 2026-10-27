@@ -9,6 +9,7 @@ import {
     ForeignKey,
     AllowNull,
 } from "sequelize-typescript";
+import { ConversionStatus } from "src/constants";
 import { Quote } from "src/quotes/models/quotes.model";
 
 @Table({
@@ -34,7 +35,7 @@ export class Conversion extends Model {
     declare quote_id: string;
 
     @Column({ type: DataTypes.STRING, allowNull: false })
-    declare status: string;
+    declare status: ConversionStatus;
 
     @CreatedAt
     declare created_at: CreationOptional<Date>;
