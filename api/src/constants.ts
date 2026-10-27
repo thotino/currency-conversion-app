@@ -15,7 +15,7 @@ export enum ConversionStatus {
     FAILED = "FAILED",
     FAILED_NEED_MANUAL_REVIEW = "FAILED_NEED_MANUAL_REVIEW",
 }
-export enum EventProcessingStatus {
+export enum WebhookEventProcessingStatus {
     PENDING = "PENDING",
     PROCESSING = "PROCESSING",
     COMPLETED = "COMPLETED",
@@ -24,3 +24,8 @@ export enum EventProcessingStatus {
     FAILED_NEED_MANUAL_REVIEW = "FAILED_NEED_MANUAL_REVIEW"
 }
 export const USER_ID = "00000000-0000-0000-0000-000000000001";
+export enum WebhookEventDataStatus {
+    EXECUTED = "executed",
+    ACCEPTED = "accepted",
+    REJECTED = "rejected",
+}
