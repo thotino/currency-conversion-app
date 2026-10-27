@@ -2,11 +2,7 @@ import { WebhooksProviderDto } from "./dtos/webhooks.provider.dto";
 import { Injectable } from "@nestjs/common";
 import { WebhooksRepository } from "./webhooks.repository";
 import { WebhookEvent } from "src/types";
-enum ConversionsEventsTypes {
-    EXECUTED = "conversion.executed",
-    ACCEPTED = "conversion.accepted",
-    REJECTED = "conversion.rejected",
-}
+
 @Injectable()
 export class WebhooksService {
     constructor(private webhooksRepository: WebhooksRepository) {}

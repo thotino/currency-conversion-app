@@ -6,7 +6,8 @@ import {
     Table,
     UpdatedAt,
 } from "sequelize-typescript";
-import { EventProcessingStatus } from "src/constants";
+import { WebhookEventProcessingStatus } from "src/constants";
+import { WebhookEventPayload } from "src/types";
 
 @Table({
     timestamps: true,
@@ -27,17 +28,17 @@ export class Event extends Model {
     declare provider_ref: string;
 
     @Column({
-        type: DataTypes.ENUM,
+        type: DataTypes.STRING,
         allowNull: false,
-        values: Object.values(EventProcessingStatus),
+        values: Object.values(WebhookEventProcessingStatus),
     })
-    declare event_processing_status: string;
+    declare event_processing_status: WebhookEventProcessingStatus;
 
     @Column({ type: DataTypes.DATE, allowNull: false })
     declare event_occurred_at: Date;
 
     @Column({ type: DataTypes.JSON, allowNull: false })
-    declare event_payload: Record<string, unknown>;
+    declare event_payload: WebhookEventPayload;
 
     @CreatedAt
     declare created_at: CreationOptional<Date>;

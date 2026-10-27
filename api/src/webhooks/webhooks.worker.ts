@@ -22,35 +22,5 @@ export class WebhooksWorker {
         if (Array.isArray(events)) {
             await this.webhooksService.updateConversionsFromEvents(events);
         }
-        // for await (const pendingEvent of this.webhooksService.findAllPendingEvents()) {
-        //     const conversion = await this.conversionsService.findOneByKey(
-        //         pendingEvent.payload.externalRef,
-        //     );
-        //     if (conversion != null) {
-        //         switch (pendingEvent.payload.status) {
-        //             case "accepted":
-        //                 await this.webhooksService.updateConversionAsAccepted(
-        //                     pendingEvent,
-        //                     conversion,
-        //                 );
-        //                 break;
-        //             case "executed":
-        //                 await this.webhooksService.updateConversionAsCompleted(
-        //                     pendingEvent,
-        //                     conversion,
-        //                 );
-        //                 break;
-        //             case "rejected":
-        //                 await this.webhooksService.updateConversionAsRejected(
-        //                     pendingEvent,
-        //                     conversion,
-        //                 );
-        //                 break;
-        //         }
-        //     }
-        // }
-        // For each event, find conversion
-        // if conversion exists, update conversion and event
-        // if conversion do not exists, do nothing
     }
 }
