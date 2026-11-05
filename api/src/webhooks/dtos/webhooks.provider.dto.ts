@@ -7,7 +7,7 @@ import {
     IsString,
     ValidateNested,
 } from "class-validator";
-import { Currency } from "src/constants";
+import { Currency, WebhookEventDataStatus } from "src/constants";
 
 class WebhooksProviderDataDto {
     @IsString()
@@ -16,8 +16,8 @@ class WebhooksProviderDataDto {
     @IsString()
     externalReference!: string;
 
-    @IsString()
-    status?: string;
+    @IsEnum(WebhookEventDataStatus)
+    status?: WebhookEventDataStatus;
 
     @IsEnum(Currency)
     sourceCurrency?: Currency;

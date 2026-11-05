@@ -29,12 +29,6 @@ export class WebhooksRepository {
         readonly conversionModel: typeof ConversionModel,
     ) {}
     private static format(instance: EventModel) {
-        if (instance.event_payload.status === WebhookEventDataStatus.ACCEPTED) {
-        }
-        if (instance.event_payload.status === WebhookEventDataStatus.ACCEPTED) {
-        }
-        if (instance.event_payload.status === WebhookEventDataStatus.ACCEPTED) {
-        }
         return {
             id: instance.id,
             eventId: instance.event_id,
@@ -118,15 +112,8 @@ export class WebhooksRepository {
     async updateConversions(processingEvents: WebhookEvent[]) {
         const transaction = await this.sequelize.transaction();
         try {
-            // const eventIds = new Set(processingEvents.map(event => event.id));
             // 1. Build an event mapping
-            const eventMapping = new Map(
-                // What if there are several events for the same convrsion order??
-                processingEvents.map(event => [
-                    `${event.payload.externalReference}::${event.payload.providerRef}`,
-                    event,
-                ]),
-            );
+            const eventIds = new Set(processingEvents.map(event => event.id));
             const eventTuples = new Set(
                 processingEvents.map(
                     event =>
@@ -147,6 +134,7 @@ export class WebhooksRepository {
                                     ConversionStatus.SUBMITTING,
                                     ConversionStatus.SUBMITTED,
                                     ConversionStatus.UNKNOWN,
+                                    ConversionStatus.ACCEPTED,
                                     ConversionStatus.PENDING,
                                     ConversionStatus.COMPLETED,
                                     ConversionStatus.REJECTED,
@@ -159,22 +147,38 @@ export class WebhooksRepository {
                 transaction,
             });
             if (conversions.length == 0) {
-                throw new Error("ERR_CONVERSIONS_RETRIEVAL_FAILED");
+                await this.eventModel.update(
+                    {
+                        event_processing_status:
+                            WebhookEventProcessingStatus.PENDING,
+                    },
+                    {
+                        where: {
+                            id: { [Op.in]: eventIds },
+                            event_processing_status:
+                                WebhookEventProcessingStatus.PROCESSING,
+                        },
+                        transaction,
+                    },
+                );
+                await transaction.commit();
+                return null;
+                // throw new Error("ERR_CONVERSIONS_RETRIEVAL_FAILED");
             }
             // 3. Build a conversions mapping
             const conversionMapping = new Map(
                 conversions.map(conversion => [
                     `${conversion.id}::${conversion.provider_ref}`,
-                    conversion,
+                    conversion.toJSON(),
                 ]),
             );
             // 4. Build the updates
-            const eventUpdates = [];
-            const conversionUpdates = [];
+            const eventUpdates = new Map();
+            const conversionUpdates = new Map();
             for (let event of processingEvents) {
                 const key = `${event.payload.externalReference}::${event.payload.providerRef}`;
                 const eventUpdt = {
-                    ...event,
+                    // ...event,
                     id: event.id,
                     event_id: event.eventId,
                     event_type: event.type,
@@ -183,22 +187,18 @@ export class WebhooksRepository {
                     event_occurred_at: event.occuredAt,
                     event_payload: event.payload,
                 };
-                if (event.eventId != eventMapping.get(key)?.eventId) {
-                    eventUpdt.event_processing_status =
-                        WebhookEventProcessingStatus.IGNORED;
-                    eventUpdates.push(eventUpdt);
-                    continue;
-                }
-                const conversion = conversionMapping.get(key);
+                const conversion = conversionUpdates.has(key)
+                    ? conversionUpdates.get(key)
+                    : conversionMapping.get(key);
                 if (conversion == null) {
                     //! This can happen in the case of early webhook (we received the event before the confirmation of the submission).
                     eventUpdt.event_processing_status =
                         WebhookEventProcessingStatus.FAILED_NEED_MANUAL_REVIEW;
-                    eventUpdates.push(eventUpdt);
+                    eventUpdates.set(event.id, eventUpdt);
                     continue;
                 }
                 const conversionUpdt = {
-                    ...conversion.toJSON(),
+                    ...conversion,
                     id: conversion.id,
                     status: conversion.status,
                 };
@@ -252,14 +252,17 @@ export class WebhooksRepository {
                             WebhookEventProcessingStatus.IGNORED;
                     }
                 }
-                eventUpdates.push(eventUpdt);
-                conversionUpdates.push(conversionUpdt);
+                eventUpdates.set(event.id, eventUpdt);
+                conversionUpdates.set(key, conversionUpdt);
             }
-            await this.conversionModel.bulkCreate(conversionUpdates, {
-                updateOnDuplicate: ["status", "updated_at"],
-                transaction,
-            });
-            await this.eventModel.bulkCreate(eventUpdates, {
+            await this.conversionModel.bulkCreate(
+                [...conversionUpdates.values()],
+                {
+                    updateOnDuplicate: ["status", "updated_at"],
+                    transaction,
+                },
+            );
+            await this.eventModel.bulkCreate([...eventUpdates.values()], {
                 updateOnDuplicate: ["event_processing_status", "updated_at"],
                 transaction,
             });
@@ -269,56 +272,4 @@ export class WebhooksRepository {
             throw error;
         }
     }
-    // async updateConversionAsAccepted(event: Event, conversion: Conversion) {
-    //     const transaction = await this.sequelize.transaction();
-    //     try {
-    //         await this.eventModel.update(
-    //             { status: EventProcessingStatus.COMPLETED },
-    //             { transaction, where: { id: event.id } },
-    //         );
-    //         await this.conversionModel.update(
-    //             { status: ConversionStatus.ACCEPTED },
-    //             { transaction, where: { id: conversion.id } },
-    //         );
-    //         await transaction.commit();
-    //     } catch (error) {
-    //         await transaction.rollback();
-    //         throw error;
-    //     }
-    // }
-    // async updateConversionAsCompleted(event: Event, conversion: Conversion) {
-    //     const transaction = await this.sequelize.transaction();
-    //     try {
-    //         await this.eventModel.update(
-    //             { status: EventProcessingStatus.COMPLETED },
-    //             { transaction, where: { id: event.id } },
-    //         );
-    //         await this.conversionModel.update(
-    //             { status: ConversionStatus.COMPLETED },
-    //             { transaction, where: { id: conversion.id } },
-    //         );
-    //         await transaction.commit();
-    //     } catch (error) {
-    //         await transaction.rollback();
-    //         throw error;
-    //     }
-    // }
-
-    // async updateConversionAsRejected(event: Event, conversion: Conversion) {
-    //     const transaction = await this.sequelize.transaction();
-    //     try {
-    //         await this.eventModel.update(
-    //             { status: EventProcessingStatus.COMPLETED },
-    //             { transaction, where: { id: event.id } },
-    //         );
-    //         await this.conversionModel.update(
-    //             { status: ConversionStatus.FAILED },
-    //             { transaction, where: { id: conversion.id } },
-    //         );
-    //         await transaction.commit();
-    //     } catch (error) {
-    //         await transaction.rollback();
-    //         throw error;
-    //     }
-    // }
 }
