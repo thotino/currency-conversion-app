@@ -3,10 +3,11 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { BalancesService } from "../balances.service";
 import { BalancesController } from "../balances.controller";
+import { vi } from "vitest";
 
 describe("Balances", () => {
     let app: INestApplication;
-    const balancesService = { buildBalanceOnDemand: jest.fn() };
+    const balancesService = { buildBalanceOnDemand: vi.fn() };
 
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({

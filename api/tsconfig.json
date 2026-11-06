@@ -21,8 +21,11 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    "types": ["jest", "node"],
-    "ignoreDeprecations": "6.0"
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "src/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

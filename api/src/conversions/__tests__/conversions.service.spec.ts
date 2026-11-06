@@ -1,3 +1,5 @@
+import { describe, beforeAll, afterAll, test, expect, vi } from "vitest";
+import { Test } from "@nestjs/testing";
 import { ConversionsRepository } from "../conversions.repository";
 import { ConversionsService } from "../conversions.service";
 import { ProviderClient } from "src/provider/provider.client";
@@ -9,33 +11,39 @@ import { AlreadyConsumedQuoteError } from "src/errors/AlreadyConsumedQuoteError"
 import { ExpiredQuoteError } from "src/errors/ExpiredQuoteError";
 import Conversion from "src/entities/Conversion";
 import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolationError";
-
+vi.mock("src/provider/provider.client");
+vi.mock("src/conversions/conversions.repository");
 describe("Conversions", () => {
-    // @ts-expect-error
-    const providerClient: jest.Mocked<ProviderClient> = {
-        baseUrl: "http://provider/",
-        submitConversion: jest.fn(),
+    const providerClient = {};
+    const conversionsRepository = {
+        createConversion: vi.fn(),
+        findByKey: vi.fn(),
     };
-    // @ts-expect-error
-    const conversionsRepository: jest.Mocked<ConversionsRepository> = {
-        createConversion: jest.fn(),
-        findByKey: jest.fn(),
-    };
-    const conversionsService = new ConversionsService(
-        providerClient,
-        conversionsRepository,
-    );
+    let conversionsService: ConversionsService;
+    beforeAll(async () => {
+        const moduleRef = await Test.createTestingModule({
+            providers: [
+                ConversionsService,
+                { provide: ProviderClient, useValue: providerClient },
+                {
+                    provide: ConversionsRepository,
+                    useValue: conversionsRepository,
+                },
+            ],
+        }).compile();
+        conversionsService = moduleRef.get(ConversionsService);
+    });
     const userId = "MY-USER-ID";
     const quoteId = "MY-QUOTE-ID";
     const idempotencyKey = "RANDOM-KEY";
     describe("create a new conversion", () => {
         const now = new Date("2026-01-01T23:30");
         beforeAll(() => {
-            jest.clearAllMocks();
-            jest.useFakeTimers({ now });
+            vi.clearAllMocks();
+            vi.useFakeTimers({ now });
         });
         afterAll(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
         const expiredQuote = new Quote(
             "UUID",
@@ -90,20 +98,6 @@ describe("Conversions", () => {
                 conversionsService.create(userId, quoteId, idempotencyKey),
             ).rejects.toThrow(ExpiredQuoteError);
         });
-        // test("should throw an error if the retrieved quote was already consumed", async () => {
-        //     conversionsRepository.createConversionReservation.mockResolvedValueOnce(
-        //         {
-        //             quote: consumedQuote,
-        //             created: false,
-        //             existingConversion: null,
-        //             createdConversion: null,
-        //             isQuotePreviouslyConsumed: true,
-        //         },
-        //     );
-        //     await expect(
-        //         conversionsService.create(userId, quoteId, idempotencyKey),
-        //     ).rejects.toThrow(AlreadyConsumedQuoteError);
-        // });
         test("should return the existing conversion", async () => {
             conversionsRepository.findByKey.mockResolvedValueOnce(conversion);
             await expect(
@@ -212,5 +206,5 @@ describe("Conversions", () => {
             ).rejects.toThrow(IdempotencyKeyViolationError);
         });
     });
-    describe("create conversion to provider", () => {});
+    describe.todo("create conversion to provider", () => {});
 });

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "",
+  "type": "module",
   "scripts": {
     "build": "nest build",
     "start": "nest start",
@@ -13,8 +14,8 @@
     "migrate:up": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create --migration-file-language sql",
-    "test": "jest",
-    "test:e2e": "jest --config jest.e2e.config.js --detectOpenHandles",
+    "test": "vitest run",
+    "test:e2e": "vitest --config jest.e2e.config.js --detectOpenHandles",
     "lint": "eslint .",
     "prettier": "prettier --write \"{,src/**/}*.{,ts}\""
   },
@@ -23,8 +24,8 @@
     "@nestjs/config": "~12.0.1",
     "@nestjs/core": "~12.2.0",
     "@nestjs/platform-express": "~12.2.0",
-    "@nestjs/sequelize": "~12.0.0",
     "@nestjs/schedule": "~12.0.2",
+    "@nestjs/sequelize": "~12.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "date-fns": "^4.4.0",
@@ -45,18 +46,18 @@
     "@types/pg": "^8.23.1",
     "@types/sequelize": "^6.12.0",
     "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/eslint-plugin": "^1.6.28",
     "eslint": "^10.13.0",
-    "eslint-plugin-jest": "^29.17.0",
     "globals": "^17.13.0",
-    "jest": "^30.5.2",
     "jiti": "^2.7.0",
     "prettier": "^3.9.10",
     "supertest": "^7.3.1",
-    "ts-jest": "^29.4.15",
     "ts-loader": "^9.6.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.0"
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.1.0"
   }
 }

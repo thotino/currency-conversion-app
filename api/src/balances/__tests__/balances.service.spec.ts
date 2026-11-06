@@ -5,18 +5,19 @@ import Quote from "src/entities/Quote";
 import Money from "src/entities/Money";
 import Balance from "src/entities/Balance";
 import { ConversionStatus, Currency, USER_ID } from "src/constants";
+import { describe, beforeEach, afterEach, vi, test, expect } from "vitest";
 
-jest.mock("../../conversions/conversions.service");
+vi.mock("../../conversions/conversions.service");
 
 describe("Balances", () => {
     // @ts-expect-error
-    const conversionsService: jest.Mocked<ConversionsService> = {
-        findAll: jest.fn(),
+    const conversionsService: vi.Mocked<ConversionsService> = {
+        findAll: vi.fn(),
     };
-    let balancesService: BalancesService;
-    beforeEach(() => {
-        balancesService = new BalancesService(conversionsService);
-    });
+    const balancesService: BalancesService = new BalancesService(
+        conversionsService,
+    );
+    beforeEach(() => {});
     test("should build a new balance", async () => {
         const quote = new Quote(
             "RANDOM_ID",

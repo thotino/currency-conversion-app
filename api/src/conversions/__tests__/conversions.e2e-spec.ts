@@ -9,13 +9,14 @@ import Conversion from "src/entities/Conversion";
 import { ConversionStatus, Currency } from "src/constants";
 import Quote from "src/entities/Quote";
 import Money from "src/entities/Money";
+import { vi } from "vitest";
 
 describe.skip("Conversions", () => {
     let app: INestApplication;
     const conversionsService = {
-        create: jest.fn(),
-        createConversionToProvider: jest.fn(),
-        findAll: jest.fn(),
+        create: vi.fn(),
+        createConversionToProvider: vi.fn(),
+        findAll: vi.fn(),
     };
 
     beforeAll(async () => {
