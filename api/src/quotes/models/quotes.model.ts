@@ -8,7 +8,7 @@ import {
     HasOne,
 } from "sequelize-typescript";
 import { Conversion } from "src/conversions/models/conversions.model";
-import { MoneyInterface } from "src/types";
+import type { MoneyInterface } from "src/types";
 
 @Table({
     timestamps: true,
