@@ -4,7 +4,6 @@ import { Event as EventModel } from "./models/events.model";
 import { WebhooksProviderDto } from "./dtos/webhooks.provider.dto";
 import { Conversion as ConversionModel } from "src/conversions/models/conversions.model";
 import { Sequelize } from "sequelize-typescript";
-import Conversion from "src/entities/Conversion";
 import {
     ConversionStatus,
     WebhookEventProcessingStatus,
@@ -14,11 +13,6 @@ import { literal, Op } from "sequelize";
 import { WebhookEvent, WebhookEventPayload } from "src/types";
 
 const PROCESSING_BATCH_SIZE = 100;
-const EVENT_CONVERSION_STATUS_MAPPING = new Map([
-    [WebhookEventDataStatus.ACCEPTED, ConversionStatus.ACCEPTED],
-    [WebhookEventDataStatus.REJECTED, ConversionStatus.REJECTED],
-    [WebhookEventDataStatus.EXECUTED, ConversionStatus.COMPLETED],
-]);
 
 @Injectable()
 export class WebhooksRepository {
