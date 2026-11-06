@@ -7,7 +7,7 @@ export class ConversionsWorker {
     constructor(private readonly conversionsService: ConversionsService) {}
     @Cron(CronExpression.EVERY_MINUTE, { waitForCompletion: true })
     async run() {
-        const conversionsToSubmit = await this.conversionsService.findCreated();
+        const conversionsToSubmit = await this.conversionsService.findCreatedForSubmission();
         if (!Array.isArray(conversionsToSubmit)) {
             return;
         }

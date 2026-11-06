@@ -14,7 +14,9 @@ import { IdempotencyKeyViolationError } from "src/errors/IdempotencyKeyViolation
 vi.mock("src/provider/provider.client");
 vi.mock("src/conversions/conversions.repository");
 describe("Conversions", () => {
-    const providerClient = {};
+    const providerClient = {
+        submitConversion: vi.fn(),
+    };
     const conversionsRepository = {
         createConversion: vi.fn(),
         findByKey: vi.fn(),
@@ -206,5 +208,104 @@ describe("Conversions", () => {
             ).rejects.toThrow(IdempotencyKeyViolationError);
         });
     });
-    describe.todo("create conversion to provider", () => {});
+    describe("create conversion to provider", () => {
+        const now = new Date("2026-01-01T23:30");
+        const validQuote = new Quote(
+            quoteId,
+            Money.from(1, Currency.EUR),
+            Money.from(1, Currency.GBP),
+            1,
+            Money.from(1, Currency.EUR),
+            now,
+            true,
+        );
+        const conversion = new Conversion(
+            "id",
+            userId,
+            idempotencyKey,
+            ConversionStatus.SUBMITTING,
+            validQuote,
+        );
+        const providerRef = "prv_01";
+        test("should return a valid submission result", async () => {
+            providerClient.submitConversion.mockResolvedValueOnce({
+                status: 202,
+                message: { providerRef },
+            });
+            const submissionAttemptResult =
+                await conversionsService.submitToProvider(
+                    conversion.id,
+                    validQuote,
+                );
+            expect(submissionAttemptResult).toEqual({
+                kind: ConversionStatus.SUBMITTED,
+                id: conversion.id,
+                providerRef,
+            });
+        });
+        test("should return a valid submission result", async () => {
+            providerClient.submitConversion.mockResolvedValueOnce({
+                status: 202,
+                message: { providerRef: null },
+            });
+            const submissionAttemptResult =
+                await conversionsService.submitToProvider(
+                    conversion.id,
+                    validQuote,
+                );
+            expect(submissionAttemptResult).toEqual({
+                kind: ConversionStatus.UNKNOWN,
+                id: conversion.id,
+                reason: { providerRef: null },
+            });
+        });
+        test("should return a valid submission result - unknown status with null message", async () => {
+            providerClient.submitConversion.mockResolvedValueOnce({
+                status: 202,
+                message: null,
+            });
+            const submissionAttemptResult =
+                await conversionsService.submitToProvider(
+                    conversion.id,
+                    validQuote,
+                );
+            expect(submissionAttemptResult).toEqual({
+                kind: ConversionStatus.UNKNOWN,
+                id: conversion.id,
+                reason: null,
+            });
+        });
+        test("should return a valid submission result - unknown status with unexpected message", async () => {
+            providerClient.submitConversion.mockResolvedValueOnce({
+                status: 202,
+                message: "can't provide a ref for now!",
+            });
+            const submissionAttemptResult =
+                await conversionsService.submitToProvider(
+                    conversion.id,
+                    validQuote,
+                );
+            expect(submissionAttemptResult).toEqual({
+                kind: ConversionStatus.UNKNOWN,
+                id: conversion.id,
+                reason: "can't provide a ref for now!",
+            });
+        });
+        test("should return a valid submission result - rejected status with invalidation message", async () => {
+            providerClient.submitConversion.mockResolvedValueOnce({
+                status: 400,
+                message: "invalid rate for conversion!",
+            });
+            const submissionAttemptResult =
+                await conversionsService.submitToProvider(
+                    conversion.id,
+                    validQuote,
+                );
+            expect(submissionAttemptResult).toEqual({
+                kind: ConversionStatus.REJECTED,
+                id: conversion.id,
+                reason: "invalid rate for conversion!",
+            });
+        });
+    });
 });

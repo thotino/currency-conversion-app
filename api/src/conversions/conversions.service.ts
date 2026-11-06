@@ -63,6 +63,7 @@ export class ConversionsService {
             );
             if (submissionResult.status === 202) {
                 if (
+                    submissionResult.message != null &&
                     submissionResult.message.providerRef != null &&
                     typeof submissionResult.message.providerRef === "string" &&
                     submissionResult.message.providerRef.length != 0
@@ -122,7 +123,7 @@ export class ConversionsService {
             submissionAttemptOutcomes,
         );
     }
-    async findCreated() {
+    async findCreatedForSubmission() {
         return await this.conversionRepository.findCreated();
     }
     async findAll(userId: string) {
