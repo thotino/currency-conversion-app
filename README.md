@@ -59,7 +59,7 @@ Les timers ne lancent pas de traitement immediat au demarrage. Pour tester un pa
 
 ### Prerequis
 
-- Node.js 22 (les Dockerfiles utilisent `node:22-alpine`).
+- Node.js 26 (les Dockerfiles utilisent `node:26-alpine`).
 - npm.
 - PostgreSQL 16 si l'API est lancee hors Docker.
 - Docker et Docker Compose pour le mode recommande.
