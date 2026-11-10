@@ -6,7 +6,7 @@ export class NegativeAmountMoneyOperationError
 {
     code: string = "NEGATIVE_MONEY_AMOUNT_OPERATION_ERROR";
     constructor() {
-        const msg = "Cannot create neagtive amount money";
+        const msg = "Cannot create negative amount money";
         super(msg);
     }
 }
