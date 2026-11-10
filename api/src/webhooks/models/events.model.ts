@@ -7,7 +7,7 @@ import {
     UpdatedAt,
 } from "sequelize-typescript";
 import { WebhookEventProcessingStatus } from "src/constants";
-import { WebhookEventPayload } from "src/types";
+import type { WebhookEventPayload } from "src/types";
 
 @Table({
     timestamps: true,
