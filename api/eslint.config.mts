@@ -1,7 +1,7 @@
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import jestPlugin from "eslint-plugin-jest";
+import vitestPlugin from "@vitest/eslint-plugin"
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
@@ -14,9 +14,9 @@ export default defineConfig([
     },
     {
         files: ["src/**/*.spec.ts", "src/**/*.e2e-spec.ts"],
-        plugins: { jest: jestPlugin },
-        languageOptions: {
-          globals: jestPlugin.environments.globals.globals
+        plugins: { vitest: vitestPlugin },
+        rules: {
+            ...vitestPlugin.configs.recommended.rules
         }
     },
     tseslint.configs.recommended,

@@ -5,7 +5,7 @@ import Quote from "src/entities/Quote";
 import Money from "src/entities/Money";
 import Balance from "src/entities/Balance";
 import { ConversionStatus, Currency, USER_ID } from "src/constants";
-import { describe, beforeEach, afterEach, vi, test, expect } from "vitest";
+import { describe, beforeEach, vi, test, expect } from "vitest";
 
 vi.mock("../../conversions/conversions.service");
 

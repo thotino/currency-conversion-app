@@ -6,11 +6,12 @@ import { QuotesService } from "../quotes.service";
 import { Currency } from "src/constants";
 import Quote from "src/entities/Quote";
 import Money from "src/entities/Money";
+import { describe, beforeAll, afterAll, vi, expect, test } from "vitest";
 
 describe("Quotes", () => {
     let app: INestApplication;
     const quotesService = {
-        create: jest.fn(),
+        create: vi.fn(),
     };
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({

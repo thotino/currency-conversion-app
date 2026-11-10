@@ -4,6 +4,7 @@ export default defineConfig({
         tsconfigPaths: true,
     },
     test: {
+        include: [...configDefaults.include, "**/*.e2e-spec.ts"],
         mockReset: true,
         exclude: [...configDefaults.exclude, "**/dist/**"],
     },

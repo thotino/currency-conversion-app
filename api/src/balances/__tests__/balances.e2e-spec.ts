@@ -3,7 +3,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { BalancesService } from "../balances.service";
 import { BalancesController } from "../balances.controller";
-import { vi } from "vitest";
+import { vi, describe, beforeAll, afterAll, test, expect } from "vitest";
 
 describe("Balances", () => {
     let app: INestApplication;
