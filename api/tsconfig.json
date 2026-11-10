@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2021",
     "moduleResolution": "node",
+    "target": "ES2022",
     "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -11,8 +11,8 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": ".",
-    "baseUrl": "./",
+    "rootDir": "./src",
+    // "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
@@ -21,7 +21,6 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    "types": ["node"],
     "ignoreDeprecations": "6.0",
     "paths": {
       "src/*": ["./src/*"]

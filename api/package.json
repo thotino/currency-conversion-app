@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "description": "",
-  "type": "module",
   "scripts": {
     "build": "nest build",
     "start": "nest start",
@@ -15,7 +14,6 @@
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create --migration-file-language sql",
     "test": "vitest run",
-    "test:e2e": "vitest --config jest.e2e.config.js --detectOpenHandles",
     "lint": "eslint .",
     "prettier": "prettier --write \"{,src/**/}*.{,ts}\""
   },
