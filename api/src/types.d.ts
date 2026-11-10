@@ -52,7 +52,7 @@ export interface WebhookEvent {
     eventId: string;
     type: string;
     providerRef: string;
-    occuredAt: Date;
+    occurredAt: Date;
     status: WebhookEventProcessingStatus;
     payload: WebhookEventPayload
 }

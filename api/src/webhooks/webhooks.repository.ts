@@ -28,7 +28,7 @@ export class WebhooksRepository {
             eventId: instance.event_id,
             type: instance.event_type,
             providerRef: instance.provider_ref,
-            occuredAt: instance.event_occurred_at,
+            occurredAt: instance.event_occurred_at,
             payload: instance.event_payload as WebhookEventPayload,
             status: instance.event_processing_status,
         } as WebhookEvent;
@@ -148,7 +148,7 @@ export class WebhooksRepository {
                     },
                     {
                         where: {
-                            id: { [Op.in]: eventIds },
+                            id: { [Op.in]: Array.from(eventIds) },
                             event_processing_status:
                                 WebhookEventProcessingStatus.PROCESSING,
                         },
@@ -178,7 +178,7 @@ export class WebhooksRepository {
                     event_type: event.type,
                     event_processing_status: event.status,
                     provider_ref: event.providerRef,
-                    event_occurred_at: event.occuredAt,
+                    event_occurred_at: event.occurredAt,
                     event_payload: event.payload,
                 };
                 const conversion = conversionUpdates.has(key)

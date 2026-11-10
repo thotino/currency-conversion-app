@@ -13,8 +13,14 @@ import { WebhooksRepository } from "../webhooks.repository";
 import { Test } from "@nestjs/testing";
 import { Sequelize } from "sequelize-typescript";
 import { getModelToken } from "@nestjs/sequelize";
-import { WebhookEventProcessingStatus } from "src/constants";
-import { Op } from "sequelize";
+import {
+    ConversionStatus,
+    Currency,
+    WebhookEventDataStatus,
+    WebhookEventProcessingStatus,
+} from "src/constants";
+import { Op, literal } from "sequelize";
+import { WebhookEvent } from "src/types";
 describe("WebhooksRepository", () => {
     let webhooksRepository: WebhooksRepository;
     const transactionMock = {
@@ -30,7 +36,9 @@ describe("WebhooksRepository", () => {
         findAll: vi.fn(),
         update: vi.fn(),
     };
-    const conversionModelMock = {};
+    const conversionModelMock = {
+        findAll: vi.fn(),
+    };
     beforeEach(async () => {
         sequelizeMock.transaction.mockResolvedValue(transactionMock);
         const moduleRef = await Test.createTestingModule({
@@ -120,6 +128,91 @@ describe("WebhooksRepository", () => {
             const pendingEvents =
                 await webhooksRepository.findAllPendingEvents();
             expect(pendingEvents).toHaveLength(10);
+        });
+    });
+    describe("updateConversions", () => {
+        test("should use the model to find the conversions", async () => {
+            const processingEvents: WebhookEvent[] = [
+                {
+                    id: "01",
+                    eventId: "01",
+                    type: "conversion.accepted",
+                    providerRef: "prv_01",
+                    occurredAt: new Date(),
+                    status: WebhookEventProcessingStatus.PROCESSING,
+                    payload: {
+                        status: WebhookEventDataStatus.ACCEPTED,
+                        providerRef: "prv_01",
+                        externalReference: "conv_01",
+                        sourceAmount: 1,
+                        sourceCurrency: Currency.EUR,
+                        targetCurrency: Currency.USD,
+                    },
+                },
+            ];
+            conversionModelMock.findAll.mockResolvedValueOnce([]);
+            await webhooksRepository.updateConversions(processingEvents);
+            expect(conversionModelMock.findAll).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        [Op.and]: expect.arrayContaining([
+                            literal(
+                                expect.stringContaining(
+                                    "(id, provider_ref) IN (('conv_01', 'prv_01'))",
+                                ),
+                            ),
+                            {
+                                status: {
+                                    [Op.in]: expect.arrayContaining([
+                                        ConversionStatus.SUBMITTING,
+                                        ConversionStatus.SUBMITTED,
+                                        ConversionStatus.UNKNOWN,
+                                        ConversionStatus.ACCEPTED,
+                                        ConversionStatus.PENDING,
+                                        ConversionStatus.COMPLETED,
+                                        ConversionStatus.REJECTED,
+                                    ]),
+                                },
+                            },
+                        ]),
+                    },
+                }),
+            );
+        });
+        test("should update events back to pending status if no conversion is found", async () => {
+            const processingEvents: WebhookEvent[] = [
+                {
+                    id: "01",
+                    eventId: "01",
+                    type: "conversion.accepted",
+                    providerRef: "prv_01",
+                    occurredAt: new Date(),
+                    status: WebhookEventProcessingStatus.PROCESSING,
+                    payload: {
+                        status: WebhookEventDataStatus.ACCEPTED,
+                        providerRef: "prv_01",
+                        externalReference: "conv_01",
+                        sourceAmount: 1,
+                        sourceCurrency: Currency.EUR,
+                        targetCurrency: Currency.USD,
+                    },
+                },
+            ];
+            conversionModelMock.findAll.mockResolvedValueOnce([]);
+            await webhooksRepository.updateConversions(processingEvents);
+            expect(eventModelMock.update).toHaveBeenCalledWith(
+                {
+                    event_processing_status:
+                        WebhookEventProcessingStatus.PENDING,
+                },
+                expect.objectContaining({
+                    where: {
+                        id: { [Op.in]: ["01"] },
+                        event_processing_status:
+                            WebhookEventProcessingStatus.PROCESSING,
+                    },
+                }),
+            );
         });
     });
 });
