@@ -9,15 +9,6 @@
 ## DEBRIEF CASE TECHNIQUE
 
 ### **Remarques sur mon traitement du case technique**
-Concernant l'idempotence:
-* La vérification de l'idempotence aurait dû être la toute première opération du process de création de l'ordre de conversion.
-* J'ai utilisé la clé d'idempotence comme clé primaire de ma table `conversions`, ce n'est pas prudent. Cette clé représente l'intention du client de placer son opération de change. La clé primaire est un identifiant technique. Le client ne doit pas décider d'éléments techniques. Dans le cadre de ce test, ça n'a pas d'importance car on n'a qu'un seul client.
-
-* La clé d'idempotence doit être un UUID ou un hash.
-* Il y a un bug dans mon implémentation: l'ordre de conversion est créé même si la cotation est expirée.
-* J'ai respecté l'idempotence vis-à-vis de ma BDD mais pas vis-à-vis du client. Le client reçoit une erreur si la cotation a été consommé ou est expiré. Il faudrait juste retourner l'ordre de conversion.
-* Il faut s'assurer de la non-violation de la clé d'idempotence: que le client utilise la clé d'idempotence avec le même payload
-
 Concernant la cotation:
 * Dans la cotation, figer et persister la somme convertie (ne pas recalculer les sommes après la création de la cotation)
 * Retirer l'appel au fournisseur de taux du process de création de la cotation: la latence fournisseur ne doit pas influencer la latence utilisateur
