@@ -18,8 +18,9 @@ Concernant l'ordre de conversion
 * Il faut un statut externe pour le client: CREATED, PENDING, EXECUTED, REJECTED. Ce statut externe permet de masquer la complexité des traitements internes.
 
 * Il faut une table de transition stricte entre les états de l'ordre de conversion
+
 | Etat source | Evènement | Etat cible |
-| --- | --- | --- |
+|:-----:|:----:|:-----:|
 | CREATED | prise en charge worker soumission à la banque | SUBMITTING |
 | SUBMITTING | rejet immédiat de la soumission | REJECTED |
 | SUBMITTING | crash du worker | SUBMITTING |
